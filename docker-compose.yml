@@ -1,0 +1,7 @@
+services:
+  ubuntu:
+    container_name: ubuntu_demo_edwin
+    image: ubuntu-base:latest
+    ports:
+      - "2222:22"
+    command: ["tail", "-f", "/dev/null"]
