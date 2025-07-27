@@ -34,6 +34,22 @@ else
     echo "SSH key for raptor already exists, skipping generation."
 fi
 
+# add github, bitbucket, gitlab to known hosts if not already present
+if [ ! -f /home/raptor/.ssh/known_hosts ]; then
+    mkdir -p /home/raptor/.ssh
+    touch /home/raptor/.ssh/known_hosts
+    chmod 600 /home/raptor/.ssh/known_hosts
+    chown raptor:raptor /home/raptor/.ssh/known_hosts
+fi
+
+for host in github.com bitbucket.org gitlab.com; do
+    if ! grep -q "$host" /home/raptor/.ssh/known_hosts; then
+        ssh-keyscan -H $host >> /home/raptor/.ssh/known_hosts
+    fi
+done
+
+chown raptor:raptor /home/raptor/.ssh/known_hosts
+
 # add user to sudo group
 if ! groups raptor | grep -q sudo; then
     echo "Adding raptor to sudo group..."
@@ -42,6 +58,15 @@ else
     echo "User 'raptor' is already in sudo group."
 fi
 
+# install unzip
+if ! command -v unzip &> /dev/null; then
+    echo "Installing Unzip..."
+    apt-get update
+    apt-get install -y unzip
+    echo "Unzip installed."
+else
+    echo "Unzip already installed."
+fi
 
 # install php 
 if ! grep -q "ondrej/php" /etc/apt/sources.list.d/* 2>/dev/null; then
@@ -186,6 +211,7 @@ if ! ufw status | grep -q "Status: active"; then
     ufw --force enable
     ufw allow 22/tcp   # SSH
     ufw allow 80/tcp   # HTTP
+    ufw allow 8081/tcp   # HTTP
     ufw allow 443/tcp  # HTTPS
     ufw reload
     echo "Firewall configured and enabled."
@@ -194,6 +220,7 @@ else
     # Ensure our ports are allowed even if UFW was already active
     ufw allow 22/tcp 2>/dev/null || true
     ufw allow 80/tcp 2>/dev/null || true
+    ufw allow 8081/tcp 2>/dev/null || true
     ufw allow 443/tcp 2>/dev/null || true
 fi
 
@@ -303,6 +330,37 @@ if [ "$(stat -c %U /etc/supervisor/conf.d 2>/dev/null)" != "raptor" ]; then
 else
     echo "Supervisor conf.d directory already owned by raptor."
 fi
+
+# create directory for raptor
+if [ ! -d /home/raptor/raptor ]; then
+    echo "Creating raptor directory..."
+    mkdir -p /home/raptor/raptor
+    chmod 755 /home/raptor/raptor
+else
+    echo "Raptor directory already exists."
+fi
+
+
+# clone raptor from github
+if [ ! -d /home/raptor/raptor/.git ]; then
+    echo "Cloning raptor from github..."
+    git clone https://github.com/edwinencomienda/laravel-launcher.git /home/raptor/raptor
+    echo "Raptor cloned from github."
+else
+    echo "Raptor already cloned from github."
+fi
+
+chown -R raptor:raptor /home/raptor/raptor
+
+# install bunjs as raptor user
+if ! command -v bun &> /dev/null; then
+    echo "Installing Bun as raptor..."
+    sudo -i -u raptor bash -c "curl -fsSL https://bun.sh/install | bash && source /home/raptor/.bashrc"
+    echo "Bun installed."
+else
+    echo "Bun already installed."
+fi
+
 
 # Display database credentials
 echo ""
