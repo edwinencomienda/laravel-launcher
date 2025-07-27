@@ -325,41 +325,14 @@ if ! dpkg -l | grep -q supervisor; then
     apt-get install -y supervisor
     systemctl enable supervisor
     systemctl start supervisor
-else
-    echo "Supervisor already installed."
-fi
 
-# Configure supervisord
-if [ ! -f /etc/supervisor/conf.d/raptor.conf ]; then
-    echo "Configuring Supervisor..."
-    cat > /etc/supervisor/conf.d/raptor.conf << 'EOF'
-[unix_http_server]
-file=/var/run/supervisor.sock
-chmod=0700
-chown=root:root
-
-[supervisord]
-logfile=/var/log/supervisor/supervisord.log
-pidfile=/var/run/supervisord.pid
-childlogdir=/var/log/supervisor
-
-[rpcinterface:supervisor]
-supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
-
-[supervisorctl]
-serverurl=unix:///var/run/supervisor.sock
-
-[include]
-files = /etc/supervisor/conf.d/*.conf
-EOF
-    
-    # Allow raptor user to control supervisor
+     # Allow raptor user to control supervisor
     echo "raptor ALL=NOPASSWD: /usr/bin/supervisorctl *" > /etc/sudoers.d/supervisor
-    
+
     # Restart supervisor to apply configuration
     systemctl restart supervisor
 else
-    echo "Supervisor already configured."
+    echo "Supervisor already installed."
 fi
 
 # Allow raptor user to manage supervisor conf files
@@ -419,6 +392,48 @@ else
 fi
 
 chown -R raptor:raptor /home/raptor/raptor
+
+# configure supervisor for raptor scheduler and queue worker
+if [ ! -f /etc/supervisor/conf.d/raptor.conf ]; then
+    echo "Configuring Supervisor for Raptor..."
+    cat > /etc/supervisor/conf.d/raptor.conf <<EOF
+[program:raptor-scheduler]
+command=/home/raptor/raptor/artisan schedule:work
+directory=/home/raptor/raptor
+autostart=true
+autorestart=true
+user=raptor
+numprocs=1
+process_name=%(program_name)s_%(process_num)02d
+startretries=3
+startsecs=10
+stopwaitsecs=60
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/raptor-scheduler.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=10
+
+[program:raptor-queue-worker]
+command=/home/raptor/raptor/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+directory=/home/raptor/raptor
+autostart=true
+autorestart=true
+user=raptor
+numprocs=2
+process_name=%(program_name)s_%(process_num)02d
+startretries=3
+startsecs=10
+stopwaitsecs=60
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/raptor-queue-worker.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=10
+EOF
+    supervisorctl reread
+    supervisorctl update
+else
+    echo "Supervisor for Raptor already configured."
+fi
 
 
 # Display database credentials
