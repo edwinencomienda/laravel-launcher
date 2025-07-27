@@ -278,6 +278,47 @@ else
     echo "Default Nginx site already configured."
 fi
 
+# Configure raptor Laravel application on port 8081
+if [ ! -f /etc/nginx/sites-available/raptor ]; then
+    echo "Configuring Raptor Laravel application site..."
+    cat > /etc/nginx/sites-available/raptor << 'EOF'
+server {
+    listen 8081;
+    listen [::]:8081;
+    
+    root /home/raptor/raptor/public;
+    index index.php index.html index.htm;
+    
+    server_name _;
+    
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+    
+    location ~ /\.ht {
+        deny all;
+    }
+    
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+EOF
+    
+    # Enable the raptor site
+    ln -sf /etc/nginx/sites-available/raptor /etc/nginx/sites-enabled/
+    service nginx restart
+else
+    echo "Raptor Laravel application site already configured."
+fi
+
 # install supervisord
 if ! dpkg -l | grep -q supervisor; then
     echo "Installing Supervisor..."
@@ -340,18 +381,6 @@ else
     echo "Raptor directory already exists."
 fi
 
-
-# clone raptor from github
-if [ ! -d /home/raptor/raptor/.git ]; then
-    echo "Cloning raptor from github..."
-    git clone https://github.com/edwinencomienda/laravel-launcher.git /home/raptor/raptor
-    echo "Raptor cloned from github."
-else
-    echo "Raptor already cloned from github."
-fi
-
-chown -R raptor:raptor /home/raptor/raptor
-
 # install bunjs as raptor user
 if ! command -v bun &> /dev/null; then
     echo "Installing Bun as raptor..."
@@ -360,6 +389,34 @@ if ! command -v bun &> /dev/null; then
 else
     echo "Bun already installed."
 fi
+
+# clone raptor from github
+if [ ! -d /home/raptor/raptor/.git ]; then
+    echo "Cloning raptor from github..."
+    git clone https://github.com/edwinencomienda/laravel-launcher.git /home/raptor/raptor
+    echo "Raptor cloned from github."
+
+    chown -R raptor:raptor /home/raptor/raptor
+
+    cd /home/raptor/raptor
+    su - raptor -c "cd /home/raptor/raptor && cp .env.example .env"
+    su - raptor -c "cd /home/raptor/raptor && composer install --no-dev"
+    su - raptor -c "cd /home/raptor/raptor && /home/raptor/raptor/artisan key:generate"
+    su - raptor -c "cd /home/raptor/raptor && /home/raptor/raptor/artisan config:cache"
+    su - raptor -c "cd /home/raptor/raptor && /home/raptor/.bun/bin/bun install"
+    su - raptor -c "cd /home/raptor/raptor && /home/raptor/.bun/bin/bun run build"
+
+    # create database sqlite file
+    su - raptor -c "cd /home/raptor/raptor && touch database/database.sqlite"
+    su - raptor -c "cd /home/raptor/raptor && chmod 755 database/database.sqlite"
+    su - raptor -c "cd /home/raptor/raptor && chmod 644 database/database.sqlite"
+    su - raptor -c "/home/raptor/raptor/artisan migrate"
+    su - raptor -c "/home/raptor/raptor/artisan db:seed"
+else
+    echo "Raptor already cloned from github."
+fi
+
+chown -R raptor:raptor /home/raptor/raptor
 
 
 # Display database credentials
