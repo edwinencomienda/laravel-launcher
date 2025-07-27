@@ -412,6 +412,8 @@ if [ ! -d /home/raptor/raptor/.git ]; then
     su - raptor -c "cd /home/raptor/raptor && chmod 644 database/database.sqlite"
     su - raptor -c "/home/raptor/raptor/artisan migrate"
     su - raptor -c "/home/raptor/raptor/artisan db:seed"
+
+    echo "Raptor control panel setup complete."
 else
     echo "Raptor already cloned from github."
 fi
