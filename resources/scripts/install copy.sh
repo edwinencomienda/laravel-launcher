@@ -9,6 +9,7 @@ echo "Welcome to the Raptor setup script!"
 
 echo "Current IPv4: $(curl -s ifconfig.me)"
 
+
 # create default web user
 if ! id "raptor" &>/dev/null; then
     echo "Creating user 'raptor'..."
