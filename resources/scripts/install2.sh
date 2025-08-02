@@ -82,36 +82,35 @@ if [ ! -f /usr/local/bin/frankenphp ]; then
     echo "Installing FrankenPHP..."
     curl https://frankenphp.dev/install.sh | sh
     mv frankenphp /usr/local/bin/
-
-    cat > /usr/local/bin/php << 'EOF'
-#!/usr/bin/env bash
-args=("$@")
-index=0
-for i in "$@"
-do
-    if [ "$i" == "-d" ]; then
-        unset 'args[$index]'
-        unset 'args[$index+1]'
-    fi
-    index=$((index+1))
-done
-
-/usr/local/bin/frankenphp php-cli ${args[@]}
-EOF
-    chmod +x /usr/local/bin/php
+    # add to sudoers.d/frankenphp
+    echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/frankenphp" > /etc/sudoers.d/frankenphp
 else
     echo "FrankenPHP already installed."
+fi
+
+# install php binary from https://static-php.dev/en/
+if [ ! -f /usr/local/bin/php ]; then
+    echo "Installing PHP Binary..."
+    curl -sSL https://dl.static-php.dev/static-php-cli/common/php-8.4.8-cli-linux-x86_64.tar.gz | tar -xzf - -C /usr/local/bin/
+    # rm -rf /usr/local/bin/php-8.4.8-cli-linux-x86_64.tar.gz
+
+    for user in "$CUSTOM_USER" root; do
+        echo "export PHP_BINARY=/usr/local/bin/php" >> /home/$user/.bashrc 2>/dev/null || echo "export PHP_BINARY=/usr/local/bin/php" >> /root/.bashrc
+        echo "export PATH=/usr/local/bin:\$PATH" >> /home/$user/.bashrc 2>/dev/null || echo "export PATH=/usr/local/bin:\$PATH" >> /root/.bashrc
+    done
+
+    echo "PHP Binary installed successfully."
+else
+    echo "PHP Binary already installed, skipping installation."
 fi
 
 # install composer
 if [ ! -f /usr/local/bin/composer ]; then
   echo "Installing Composer..."
-curl -sS https://getcomposer.org/installer -o composer-setup.php
-    frankenphp php-cli composer-setup.php
-    mv composer.phar /usr/local/bin/composer
-    chmod +x /usr/local/bin/composer
-    echo "Composer installed successfully."
-    echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/composer self-update*" > /etc/sudoers.d/composer
+  curl -sS https://getcomposer.org/installer | php
+  mv composer.phar /usr/local/bin/composer
+
+  echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/composer self-update*" > /etc/sudoers.d/composer
 else
   echo "Composer already installed."
 fi
