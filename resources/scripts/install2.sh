@@ -131,9 +131,9 @@ fi
 # install mysql
 if ! dpkg -l | grep -q mysql-server; then
     echo "Installing MySQL..."
-    echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
-    echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
-    apt-get install -y mysql-community-server
+    
+    echo "mysql-server mysql-server/root_password password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
+    echo "mysql-server mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
     apt-get install -y mysql-server
 
     # create mysql user
