@@ -120,7 +120,7 @@ if [ ! -f /usr/local/bin/composer ]; then
   mv composer.phar /usr/local/bin/composer
   chmod +x /usr/local/bin/composer
 
-  echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/composer *" > /etc/sudoers.d/composer
+  echo "$CUSTOM_USER ALL=NOPASSWD: /usr/local/bin/composer *" > /etc/sudoers.d/composer
   chmod 440 /etc/sudoers.d/composer
 else
   echo "Composer already installed."
