@@ -10,6 +10,8 @@ use Inertia\Inertia;
 
 Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'index'])->name('onboarding');
 
+Route::get('/api/verify-dns', [\App\Http\Controllers\DnsVerificationController::class, 'verify'])->name('verify-dns');
+
 Route::get('/', function () {
     if (! User::count()) {
         return redirect()->route('onboarding');
