@@ -15,7 +15,7 @@ createInertiaApp({
         const pages = import.meta.glob("./pages/**/*.tsx", { eager: true });
         let page = pages[`./pages/${name}.tsx`] as any;
 
-        if (!name.startsWith("auth")) {
+        if (!name.startsWith("auth") && !name.startsWith("onboarding")) {
             page.default.layout = page.default.layout || ((page: any) => <AppLayout children={page} />);
         }
 

@@ -2,13 +2,20 @@
 
 use App\Actions\CreateNginxSiteAction;
 use App\Actions\RemoveNginxSiteAction;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Route::redirect('/', '/dashboard');
 
+Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'index'])->name('onboarding');
+
 Route::get('/', function () {
-    return 'Hello World';
+    if (! User::count()) {
+        return redirect()->route('onboarding');
+    }
+
+    return redirect()->route('dashboard');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
