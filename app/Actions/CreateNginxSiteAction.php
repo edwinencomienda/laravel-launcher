@@ -45,6 +45,8 @@ class CreateNginxSiteAction
 
         $output = $ssh->runCommand(
             <<<BASH
+        set -e
+
         # delete if exists
         rm -f /etc/nginx/sites-available/$domain
         rm -f /etc/nginx/sites-enabled/$domain

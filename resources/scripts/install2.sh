@@ -10,7 +10,16 @@ MYSQL_USER_PASSWORD="raptor"
 
 echo "Welcome to the Raptor setup script!"
 
-echo "Current IPv4: $(curl -s ifconfig.me)"
+
+IPV4=$(hostname -I | awk '{print $1}')
+
+echo "Current IPv4: $IPV4"
+
+# check user must be root otherwise exit
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
+fi
 
     # create default web user
 if ! id "$CUSTOM_USER" &>/dev/null; then
@@ -57,19 +66,27 @@ echo "Updating package lists..."
 apt-get update
 
 
-# add github, bitbucket, gitlab to known hosts if not already present
-if [ ! -f /home/"$CUSTOM_USER"/.ssh/known_hosts ]; then
-    mkdir -p /home/"$CUSTOM_USER"/.ssh
-    touch /home/"$CUSTOM_USER"/.ssh/known_hosts
-    chmod 600 /home/"$CUSTOM_USER"/.ssh/known_hosts
+# Add github, bitbucket, gitlab to root's known hosts if not already present
+if [ ! -f /root/.ssh/known_hosts ]; then
+    mkdir -p /root/.ssh
+    touch /root/.ssh/known_hosts
+    chmod 600 /root/.ssh/known_hosts
 
     for host in github.com bitbucket.org gitlab.com; do
-        ssh-keyscan -H $host >> /home/"$CUSTOM_USER"/.ssh/known_hosts
+        ssh-keyscan -H $host >> /root/.ssh/known_hosts
     done
-
-    chown "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"/.ssh/known_hosts
 else
-    echo "Known hosts file already exists for $CUSTOM_USER, skipping addition."
+    echo "Root known_hosts file already exists, skipping addition."
+fi
+
+# Copy known_hosts to custom user if not already present
+if [ ! -f /home/"$CUSTOM_USER"/.ssh/known_hosts ]; then
+    mkdir -p /home/"$CUSTOM_USER"/.ssh
+    cp /root/.ssh/known_hosts /home/"$CUSTOM_USER"/.ssh/known_hosts
+    chown "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"/.ssh/known_hosts
+    chmod 600 /home/"$CUSTOM_USER"/.ssh/known_hosts
+else
+    echo "Known hosts file already exists for $CUSTOM_USER, skipping copy."
 fi
 
 # Install php and fpm
@@ -114,8 +131,6 @@ if ! dpkg -l | grep -q nginx; then
     systemctl restart nginx
 else
     echo "Nginx already installed."
-    sed -i "s/user www-data;/user $CUSTOM_USER;/" /etc/nginx/nginx.conf
-    systemctl restart nginx
 fi
 
 # install unzip
@@ -223,18 +238,66 @@ else
     echo "Supervisor already installed and configured."
 fi
 
-# Display database credentials
-echo ""
-echo "=================================================="
-echo "        SYSTEM CREDENTIALS"
-echo "  ⚠️  COPY THESE NOW - SHOWN ONLY ONCE!"
-echo "=================================================="
-echo "Sudo User: $CUSTOM_USER"
-echo "Sudo Password: $LINUX_USER_PASSWORD"
-echo ""
-echo "MySQL Database User: $CUSTOM_USER"
-echo "MySQL Database Password: $MYSQL_USER_PASSWORD"
-echo "=================================================="
-echo ""
+# remove the default nginx site
+rm -f /etc/nginx/sites-available/default
+rm -f /etc/nginx/sites-enabled/default
 
-echo "Setup complete!"
+# create the new default site if not exists
+if [ ! -f /etc/nginx/sites-available/default ]; then
+cat <<EOF > /etc/nginx/sites-available/default
+server {
+    listen 8081;
+    server_name $IPV4;
+    root /home/$CUSTOM_USER/raptor/public;
+    index index.php index.html;
+
+    client_max_body_size 25M;
+
+    #access_log /var/log/nginx/access.log;
+    #error_log /var/log/nginx/error.log;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+    }
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+} 
+EOF
+
+    # clone the raptor repository
+    git clone https://github.com/edwinencomienda/laravel-launcher.git /home/$CUSTOM_USER/raptor
+    cd /home/$CUSTOM_USER/raptor && composer install
+
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/$CUSTOM_USER/raptor
+    chmod -R 755 /home/$CUSTOM_USER/raptor
+
+    # restart nginx and enable the default site
+    ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+    nginx -t && nginx -s reload
+else
+    echo "Default site already exists, skipping creation."
+fi
+
+# Display database credentials
+# echo ""
+# echo "=================================================="
+# echo "        SYSTEM CREDENTIALS"
+# echo "  ⚠️  COPY THESE NOW - SHOWN ONLY ONCE!"
+# echo "=================================================="
+# echo "Sudo User: $CUSTOM_USER"
+# echo "Sudo Password: $LINUX_USER_PASSWORD"
+# echo ""
+# echo "MySQL Database User: $CUSTOM_USER"
+# echo "MySQL Database Password: $MYSQL_USER_PASSWORD"
+# echo "=================================================="
+# echo ""
+
+echo "Starting onboarding process..."
+echo "Visit the onboarding URL: http://$IPV4:8081/onboarding"
+
+echo "Setup complete! 🚀"
