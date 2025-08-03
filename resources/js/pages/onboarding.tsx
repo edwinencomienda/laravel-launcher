@@ -4,21 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useForm } from "@inertiajs/react";
 import { useState } from "react";
 import { Toaster, toast } from "sonner";
 
 export default function Onboarding({ ip }: { ip: string }) {
-    const [adminDomain, setAdminDomain] = useState("");
-    const [wildcardDomain, setWildcardDomain] = useState("");
     const [verifying, setVerifying] = useState(false);
     const [adminVerified, setAdminVerified] = useState<boolean | null>(null);
     const [wildcardVerified, setWildcardVerified] = useState<boolean | null>(null);
 
-    const adminDNS = `${adminDomain}. IN A ${ip}`;
-    const wildcardDNS = `${wildcardDomain}. IN A ${ip}`;
+    const onboardingForm = useForm({
+        admin_domain: "",
+        site_domain: "",
+    });
+
+    const handleSubmitForm = () => {
+        onboardingForm.post(route("onboarding.store"), {
+            preserveScroll: true,
+        });
+    };
 
     const verifyDNS = async () => {
-        if (!adminDomain && !wildcardDomain) {
+        if (!onboardingForm.data.admin_domain && !onboardingForm.data.site_domain) {
             toast.error("Please enter at least one domain to verify");
             return;
         }
@@ -28,17 +35,17 @@ export default function Onboarding({ ip }: { ip: string }) {
         try {
             const promises = [];
 
-            if (adminDomain) {
+            if (onboardingForm.data.admin_domain) {
                 promises.push(
-                    fetch(`/api/verify-dns?domain=${encodeURIComponent(adminDomain)}&ip=${encodeURIComponent(ip)}`)
+                    fetch(`/api/verify-dns?domain=${encodeURIComponent(onboardingForm.data.admin_domain)}&ip=${encodeURIComponent(ip)}`)
                         .then((res) => res.json())
                         .then((data) => ({ type: "admin", success: data.verified })),
                 );
             }
 
-            if (wildcardDomain) {
+            if (onboardingForm.data.site_domain) {
                 promises.push(
-                    fetch(`/api/verify-dns?domain=${encodeURIComponent(wildcardDomain)}&ip=${encodeURIComponent(ip)}`)
+                    fetch(`/api/verify-dns?domain=${encodeURIComponent(onboardingForm.data.site_domain)}&ip=${encodeURIComponent(ip)}`)
                         .then((res) => res.json())
                         .then((data) => ({ type: "wildcard", success: data.verified })),
                 );
@@ -97,8 +104,8 @@ export default function Onboarding({ ip }: { ip: string }) {
                             <Label htmlFor="admin-domain">Admin Domain</Label>
                             <Input
                                 id="admin-domain"
-                                value={adminDomain}
-                                onChange={(e) => setAdminDomain(e.target.value)}
+                                value={onboardingForm.data.admin_domain}
+                                onChange={(e) => onboardingForm.setData("admin_domain", e.target.value)}
                                 placeholder="admin.yourdomain.com"
                                 className="mt-1"
                             />
@@ -109,8 +116,8 @@ export default function Onboarding({ ip }: { ip: string }) {
                             <Label htmlFor="wildcard-domain">Your site domain</Label>
                             <Input
                                 id="wildcard-domain"
-                                value={wildcardDomain}
-                                onChange={(e) => setWildcardDomain(e.target.value)}
+                                value={onboardingForm.data.site_domain}
+                                onChange={(e) => onboardingForm.setData("site_domain", e.target.value)}
                                 placeholder="yourdomain.com"
                                 className="mt-1"
                             />
@@ -120,7 +127,11 @@ export default function Onboarding({ ip }: { ip: string }) {
 
                     <div className="mb-4 flex items-center justify-between">
                         <p>Add these A records to your domain DNS:</p>
-                        <Button onClick={verifyDNS} disabled={verifying || (!adminDomain && !wildcardDomain)} size="sm">
+                        <Button
+                            onClick={verifyDNS}
+                            disabled={verifying || (!onboardingForm.data.admin_domain && !onboardingForm.data.site_domain)}
+                            size="sm"
+                        >
                             {verifying ? "Verifying..." : "Verify DNS"}
                         </Button>
                     </div>
@@ -134,9 +145,9 @@ export default function Onboarding({ ip }: { ip: string }) {
                             <div className="flex items-center justify-between rounded border bg-muted p-3">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-muted-foreground">Name:</span>
-                                    <code className="font-mono text-sm text-foreground">{adminDomain}.</code>
+                                    <code className="font-mono text-sm text-foreground">{onboardingForm.data.admin_domain}.</code>
                                 </div>
-                                <CopyTextButton text={`${adminDomain}.`} disabled={!adminDomain} />
+                                <CopyTextButton text={`${onboardingForm.data.admin_domain}.`} disabled={!onboardingForm.data.admin_domain} />
                             </div>
                             <div className="flex items-center justify-between rounded border bg-muted p-3">
                                 <div className="flex items-center gap-2">
@@ -157,9 +168,9 @@ export default function Onboarding({ ip }: { ip: string }) {
                             <div className="flex items-center justify-between rounded border bg-muted p-3">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-muted-foreground">Name:</span>
-                                    <code className="font-mono text-sm text-foreground">{wildcardDomain}.</code>
+                                    <code className="font-mono text-sm text-foreground">{onboardingForm.data.site_domain}.</code>
                                 </div>
-                                <CopyTextButton text={`${wildcardDomain}.`} disabled={!wildcardDomain} />
+                                <CopyTextButton text={`${onboardingForm.data.site_domain}.`} disabled={!onboardingForm.data.site_domain} />
                             </div>
                             <div className="flex items-center justify-between rounded border bg-muted p-3">
                                 <div className="flex items-center gap-2">
@@ -172,7 +183,9 @@ export default function Onboarding({ ip }: { ip: string }) {
                     </div>
 
                     <div className="mt-6">
-                        <Button>Continue</Button>
+                        <Button disabled={!adminVerified || !wildcardVerified} onClick={handleSubmitForm}>
+                            Continue
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

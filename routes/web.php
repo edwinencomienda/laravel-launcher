@@ -9,7 +9,7 @@ use Inertia\Inertia;
 // Route::redirect('/', '/dashboard');
 
 Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'index'])->name('onboarding');
-
+Route::post('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
 Route::get('/api/verify-dns', [\App\Http\Controllers\DnsVerificationController::class, 'verify'])->name('verify-dns');
 
 Route::get('/', function () {
@@ -41,7 +41,7 @@ Route::get('/test', function (
     CreateNginxSiteAction $createNginxSiteAction,
     RemoveNginxSiteAction $removeNginxSiteAction,
 ) {
-    return dns_get_record('web.heyedwin.dev');
+    return dns_get_record('web.heyedwin.dev', DNS_A);
 });
 
 require __DIR__.'/settings.php';
