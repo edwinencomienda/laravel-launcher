@@ -123,4 +123,5 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'private_key_path' => env('APP_PRIVATE_KEY_PATH'),
 ];

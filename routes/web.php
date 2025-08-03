@@ -1,6 +1,7 @@
 <?php
 
-use App\Actions\SetupSiteNginxConfigAction;
+use App\Actions\CreateNginxSiteAction;
+use App\Actions\RemoveNginxSiteAction;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -27,7 +28,27 @@ Route::get('/user', function () {
     echo 'Process Group: '.posix_getgrgid(posix_getegid())['name']."\n";
 });
 
-Route::get('/test', function (SetupSiteNginxConfigAction $setupSiteNginxConfigAction) {
+Route::get('/test', function (
+    CreateNginxSiteAction $createNginxSiteAction,
+    RemoveNginxSiteAction $removeNginxSiteAction,
+) {
+    // $nginx = view('templates.nginx', [
+    //     'port' => 80,
+    //     'server_name' => '_',
+    //     'root' => '/home/raptor/elon/public',
+    //     'client_max_body_size' => '25M',
+    // ]);
+
+    $output = $createNginxSiteAction->handle(
+        rootPath: '/home/raptor/elon/public',
+        domain: 'elon.heyedwin.dev',
+        port: 8082,
+    );
+
+    // return $removeNginxSiteAction->handle('elon.heyedwin.dev');
+
+    return response($output)->header('Content-Type', 'text/plain');
+
     // return "elon";
     // defer(function () {
     //     sleep(5);

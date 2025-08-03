@@ -3,20 +3,24 @@
 namespace App\Services;
 
 use Exception;
+use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SSH2;
 
 class SshService
 {
     protected SSH2 $ssh;
 
-    public function __construct(protected string $host, protected string $user, protected string $password) {}
+    public function __construct(protected string $host, protected string $user) {}
 
     public function connect()
     {
-        $this->ssh = new SSH2($this->host);
+        $key = PublicKeyLoader::load(
+            file_get_contents(config('app.private_key_path'))
+        );
 
-        if (! $this->ssh->login($this->user, $this->password)) {
-            throw new Exception('Server connection failed');
+        $this->ssh = new SSH2($this->host);
+        if (! $this->ssh->login($this->user, $key)) {
+            throw new Exception('Login failed');
         }
     }
 

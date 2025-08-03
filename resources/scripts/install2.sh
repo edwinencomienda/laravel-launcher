@@ -12,7 +12,7 @@ echo "Welcome to the Raptor setup script!"
 
 echo "Current IPv4: $(curl -s ifconfig.me)"
 
-# create default web user
+    # create default web user
 if ! id "$CUSTOM_USER" &>/dev/null; then
     echo "Creating user '$CUSTOM_USER'..."
     adduser --disabled-password --gecos "" "$CUSTOM_USER"
@@ -34,11 +34,28 @@ chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"
 if [ ! -f /home/"$CUSTOM_USER"/.ssh/id_rsa ]; then
     mkdir -p /home/"$CUSTOM_USER"/.ssh
     ssh-keygen -f /home/"$CUSTOM_USER"/.ssh/id_rsa -t ed25519 -N '' -C "$CUSTOM_USER@$(hostname)"
+
+    # copy root authorized_keys to new user
+    cp /root/.ssh/authorized_keys /home/"$CUSTOM_USER"/.ssh/authorized_keys
+
+    # set ownership and permissions
     chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"/.ssh
-    chmod 700 /home/"$CUSTOM_USER"/.ssh/id_rsa
+    chmod 600 /home/"$CUSTOM_USER"/.ssh/id_rsa
+    chmod 644 /home/"$CUSTOM_USER"/.ssh/authorized_keys
+    chmod 700 /home/"$CUSTOM_USER"/.ssh
 else
     echo "SSH key for $CUSTOM_USER already exists, skipping generation."
 fi
+
+
+# add repositories for php and nginx
+echo "Adding repositories for PHP and Nginx..."
+add-apt-repository -y -n ppa:ondrej/nginx
+add-apt-repository -y -n ppa:ondrej/php
+
+echo "Updating package lists..."
+apt-get update
+
 
 # add github, bitbucket, gitlab to known hosts if not already present
 if [ ! -f /home/"$CUSTOM_USER"/.ssh/known_hosts ]; then
@@ -58,8 +75,6 @@ fi
 # Install php and fpm
 if ! dpkg -l | grep -q php8.3-fpm; then
     echo "Installing PHP packages..."
-    add-apt-repository ppa:ondrej/php -y
-    apt update
     apt-get install -y \
       php8.3 \
       php8.3-fpm php8.3-cli php8.3-dev \
@@ -84,9 +99,18 @@ fi
 
 if ! dpkg -l | grep -q nginx; then
     echo "Installing Nginx..."
-    apt-get update
     apt-get install -y nginx
     sed -i "s/user www-data;/user $CUSTOM_USER;/" /etc/nginx/nginx.conf
+
+    # allow user to manage nginx
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/nginx -t" >> /etc/sudoers.d/nginx
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/nginx -s reload" >> /etc/sudoers.d/nginx
+    
+    # change the ownership of the sites-available and sites-enabled directories
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/nginx/sites-available/
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/nginx/sites-enabled/
+
     systemctl restart nginx
 else
     echo "Nginx already installed."
@@ -97,7 +121,6 @@ fi
 # install unzip
 if ! command -v unzip &> /dev/null; then
     echo "Installing Unzip..."
-    apt-get update
     apt-get install -y unzip
     echo "Unzip installed."
 else
