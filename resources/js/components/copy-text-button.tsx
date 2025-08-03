@@ -6,7 +6,12 @@ export default function CopyTextButton({ text, disabled, className }: { text: st
     const [copied, setCopied] = useState(false);
 
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(text);
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
