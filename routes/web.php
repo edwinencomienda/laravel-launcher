@@ -41,7 +41,7 @@ Route::get('/test', function (
     CreateNginxSiteAction $createNginxSiteAction,
     RemoveNginxSiteAction $removeNginxSiteAction,
 ) {
-    return dns_get_record('web.heyedwin.dev', DNS_A);
+    return dns_get_record('web.heyedwin.dev');
 });
 
 require __DIR__.'/settings.php';
