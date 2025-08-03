@@ -1,7 +1,5 @@
 <?php
 
-use App\Actions\CreateNginxSiteAction;
-use App\Actions\RemoveNginxSiteAction;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,19 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/install', function () {
     return response(file_get_contents(resource_path('scripts/install2.sh')))
         ->header('Content-Type', 'text/plain');
-});
-
-Route::get('/user', function () {
-    echo 'PHP-FPM User: '.get_current_user()."\n";
-    echo 'Process User: '.posix_getpwuid(posix_geteuid())['name']."\n";
-    echo 'Process Group: '.posix_getgrgid(posix_getegid())['name']."\n";
-});
-
-Route::get('/test', function (
-    CreateNginxSiteAction $createNginxSiteAction,
-    RemoveNginxSiteAction $removeNginxSiteAction,
-) {
-    return dns_get_record('web.heyedwin.dev', DNS_A);
 });
 
 require __DIR__.'/settings.php';
