@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
-export default function CopyTextButton({ text, disabled, className }: { text: string; disabled?: boolean; className?: string }) {
+export function CopyTextButton({ text, disabled, className }: { text: string; disabled?: boolean; className?: string }) {
     const [copied, setCopied] = useState(false);
 
     const copyToClipboard = () => {

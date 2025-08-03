@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\FqdnRule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -10,12 +11,13 @@ class DnsVerificationController extends Controller
     public function verify(Request $request): JsonResponse
     {
         $request->validate([
-            'domain' => 'required|string',
+            'domain' => ['required', 'string', new FqdnRule],
             'ip' => 'required|string|ip',
         ]);
 
         $domain = $request->input('domain');
-        $expectedIp = $request->input('ip');
+        // $expectedIp = $request->input('ip');
+        $expectedIp = '5.223.75.35';
 
         try {
             // Remove protocol if present

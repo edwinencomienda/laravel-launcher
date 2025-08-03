@@ -10,4 +10,9 @@ class Setting extends Model
     protected $casts = [
         'key' => SettingsEnum::class,
     ];
+
+    public static function getByKey(SettingsEnum $key)
+    {
+        return self::where('key', $key)->value('value');
+    }
 }

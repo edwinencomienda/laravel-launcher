@@ -1,5 +1,5 @@
-import { LucideIcon } from 'lucide-react';
-import type { Config } from 'ziggy-js';
+import { LucideIcon } from "lucide-react";
+import type { Config } from "ziggy-js";
 
 export interface Auth {
     user: User;
@@ -40,4 +40,12 @@ export interface User {
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface OnboardingFormData {
+    admin_domain: string;
+    site_domain: string;
+    app_name: string;
+    repo_url: string;
+    step: "dns" | "ssh_key" | "setup";
 }
