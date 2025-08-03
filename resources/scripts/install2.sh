@@ -269,9 +269,12 @@ server {
 } 
 EOF
 
-    # clone the raptor repository
+    # clone the raptor repository and setup
     git clone https://github.com/edwinencomienda/laravel-launcher.git /home/$CUSTOM_USER/raptor
     cd /home/$CUSTOM_USER/raptor && composer install
+    cd /home/$CUSTOM_USER/raptor && cp .env.example .env
+    php /home/$CUSTOM_USER/raptor/artisan key:generate
+    php /home/$CUSTOM_USER/raptor/artisan migrate
 
     chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/$CUSTOM_USER/raptor
     chmod -R 755 /home/$CUSTOM_USER/raptor
