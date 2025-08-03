@@ -10,9 +10,13 @@ class OnboardingController extends Controller
     {
         // get ip address
         $ip = request()->ip();
+        $sshPublicKey = file_exists('/home/raptor/.ssh/id_rsa.pub')
+            ? file_get_contents('/home/raptor/.ssh/id_rsa.pub')
+            : null;
 
         return Inertia::render('onboarding', [
             'ip' => $ip,
+            'sshPublicKey' => $sshPublicKey,
         ]);
     }
 }
