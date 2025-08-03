@@ -16,7 +16,6 @@ class DnsVerificationController extends Controller
 
         $domain = $request->input('domain');
         $expectedIp = $request->input('ip');
-        $expectedIp = '5.223.75.35';
 
         try {
             // Remove protocol if present
