@@ -18,6 +18,10 @@ if ! id "$CUSTOM_USER" &>/dev/null; then
     adduser --disabled-password --gecos "" "$CUSTOM_USER"
     echo "$CUSTOM_USER:$LINUX_USER_PASSWORD" | chpasswd
     echo "Password set for user '$CUSTOM_USER'."
+
+    # add user to sudo group
+    usermod -aG sudo "$CUSTOM_USER"
+    echo "User '$CUSTOM_USER' added to sudo group."
 else
     echo "User '$CUSTOM_USER' already exists, skipping creation."
 fi
@@ -51,12 +55,43 @@ else
     echo "Known hosts file already exists for $CUSTOM_USER, skipping addition."
 fi
 
-# add user to sudo group
-if ! groups "$CUSTOM_USER" | grep -q sudo; then
-    echo "Adding $CUSTOM_USER to sudo group..."
-    usermod -aG sudo "$CUSTOM_USER"
+# Install php and fpm
+if ! dpkg -l | grep -q php8.3-fpm; then
+    echo "Installing PHP packages..."
+    add-apt-repository ppa:ondrej/php -y
+    apt update
+    apt-get install -y \
+      php8.3 \
+      php8.3-fpm php8.3-cli php8.3-dev \
+      php8.3-pgsql php8.3-sqlite3 php8.3-gd php8.3-curl \
+      php8.3-imap php8.3-mysql php8.3-mbstring \
+      php8.3-xml php8.3-zip php8.3-bcmath php8.3-soap \
+      php8.3-intl php8.3-readline php8.3-gmp \
+      php8.3-redis php8.3-msgpack php8.3-igbinary
+
+    # update default user of php-cli
+    sed -i "s/user = www-data/user = $CUSTOM_USER/" /etc/php/8.3/cli/php.ini
+    sed -i "s/group = www-data/group = $CUSTOM_USER/" /etc/php/8.3/cli/php.ini
+
+    # update default user of php-fpm
+    sed -i "s/user = www-data/user = $CUSTOM_USER/" /etc/php/8.3/fpm/pool.d/www.conf
+    sed -i "s/group = www-data/group = $CUSTOM_USER/" /etc/php/8.3/fpm/pool.d/www.conf
+
+    systemctl restart php8.3-fpm
 else
-    echo "User '$CUSTOM_USER' is already in sudo group."
+    echo "PHP packages already installed."
+fi
+
+if ! dpkg -l | grep -q nginx; then
+    echo "Installing Nginx..."
+    apt-get update
+    apt-get install -y nginx
+    sed -i "s/user www-data;/user $CUSTOM_USER;/" /etc/nginx/nginx.conf
+    systemctl restart nginx
+else
+    echo "Nginx already installed."
+    sed -i "s/user www-data;/user $CUSTOM_USER;/" /etc/nginx/nginx.conf
+    systemctl restart nginx
 fi
 
 # install unzip
@@ -77,40 +112,16 @@ else
     echo "$CUSTOM_USER already has permission to manage ufw."
 fi
 
-# install frankenphp
-if [ ! -f /usr/local/bin/frankenphp ]; then
-    echo "Installing FrankenPHP..."
-    curl https://frankenphp.dev/install.sh | sh
-    mv frankenphp /usr/local/bin/
-    # add to sudoers.d/frankenphp
-    echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/frankenphp" > /etc/sudoers.d/frankenphp
-else
-    echo "FrankenPHP already installed."
-fi
-
-# install php binary from https://static-php.dev/en/
-if [ ! -f /usr/local/bin/php ]; then
-    echo "Installing PHP Binary..."
-    curl -sSL https://dl.static-php.dev/static-php-cli/common/php-8.4.8-cli-linux-x86_64.tar.gz | tar -xzf - -C /usr/local/bin/
-    # rm -rf /usr/local/bin/php-8.4.8-cli-linux-x86_64.tar.gz
-
-    for user in "$CUSTOM_USER" root; do
-        echo "export PHP_BINARY=/usr/local/bin/php" >> /home/$user/.bashrc 2>/dev/null || echo "export PHP_BINARY=/usr/local/bin/php" >> /root/.bashrc
-        echo "export PATH=/usr/local/bin:\$PATH" >> /home/$user/.bashrc 2>/dev/null || echo "export PATH=/usr/local/bin:\$PATH" >> /root/.bashrc
-    done
-
-    echo "PHP Binary installed successfully."
-else
-    echo "PHP Binary already installed, skipping installation."
-fi
 
 # install composer
 if [ ! -f /usr/local/bin/composer ]; then
   echo "Installing Composer..."
   curl -sS https://getcomposer.org/installer | php
   mv composer.phar /usr/local/bin/composer
+  chmod +x /usr/local/bin/composer
 
-  echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/composer self-update*" > /etc/sudoers.d/composer
+  echo "$CUSTOM_USER ALL=(root) NOPASSWD: /usr/local/bin/composer *" > /etc/sudoers.d/composer
+  chmod 440 /etc/sudoers.d/composer
 else
   echo "Composer already installed."
 fi

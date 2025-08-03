@@ -4,7 +4,11 @@ use App\Actions\SetupSiteNginxConfigAction;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::redirect('/', '/dashboard');
+// Route::redirect('/', '/dashboard');
+
+Route::get('/', function () {
+    return 'Hello World';
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
