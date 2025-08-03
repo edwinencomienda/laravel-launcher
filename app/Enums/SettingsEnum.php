@@ -9,7 +9,7 @@ enum SettingsEnum: string
     case FIRST_APP_NAME = 'first_app_name';
     case FIRST_REPO_URL = 'first_repo_url';
 
-    case CURRENT_ONBOARDING_STEP = 'current_onboarding_step';
+    case CURRENT_ONBOARDING_DATA = 'current_onboarding_data';
 
     public function label(): string
     {
@@ -18,7 +18,7 @@ enum SettingsEnum: string
             self::SITE_DOMAIN => 'Site domain',
             self::FIRST_APP_NAME => 'First app name',
             self::FIRST_REPO_URL => 'First repo URL',
-            self::CURRENT_ONBOARDING_STEP => 'Current onboarding step',
+            self::CURRENT_ONBOARDING_DATA => 'Current onboarding data',
         };
     }
 }

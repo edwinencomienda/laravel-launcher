@@ -10,6 +10,13 @@ use Inertia\Inertia;
 
 class OnboardingController extends Controller
 {
+    private function getOnboardingData()
+    {
+        $data = Setting::getByKey(SettingsEnum::CURRENT_ONBOARDING_DATA) ?: [];
+
+        return json_decode($data, true);
+    }
+
     public function index()
     {
         // get ip address
@@ -17,11 +24,12 @@ class OnboardingController extends Controller
         $sshPublicKey = file_exists('/home/raptor/.ssh/id_rsa.pub')
             ? file_get_contents('/home/raptor/.ssh/id_rsa.pub')
             : null;
+        $onboardingData = $this->getOnboardingData();
 
         return Inertia::render('onboarding', [
             'ip' => $ip,
             'sshPublicKey' => $sshPublicKey,
-            'currentStep' => Setting::getByKey(SettingsEnum::CURRENT_ONBOARDING_STEP) ?: 'dns',
+            'currentStep' => $onboardingData['step'] ?? 'admin_user',
         ]);
     }
 
@@ -29,7 +37,20 @@ class OnboardingController extends Controller
     {
         $data = [];
 
-        if ($request->step === 'dns') {
+        if ($request->step === 'admin_user') {
+            $data = $request->validate([
+                'username' => 'required|string|max:255',
+                'password' => 'required|string|max:255',
+            ]);
+
+            Setting::updateOrCreate([
+                'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
+            ], [
+                'value->username' => $data['username'],
+                'value->password' => $data['password'],
+                'value->step' => 'dns',
+            ]);
+        } elseif ($request->step === 'dns') {
             $data = $request->validate([
                 'admin_domain' => ['required', 'string', 'max:255', new FqdnRule],
                 'site_domain' => ['required', 'string', 'max:255', new FqdnRule],
@@ -48,9 +69,9 @@ class OnboardingController extends Controller
             ]);
 
             Setting::updateOrCreate([
-                'key' => SettingsEnum::CURRENT_ONBOARDING_STEP,
+                'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value' => 'ssh_key',
+                'value->step' => 'ssh_key',
             ]);
         } elseif ($request->step === 'ssh_key') {
             $data = $request->validate([
@@ -59,21 +80,16 @@ class OnboardingController extends Controller
             ]);
 
             Setting::updateOrCreate([
-                'key' => SettingsEnum::FIRST_APP_NAME,
+                'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value' => $data['app_name'],
+                'value->app_name' => $data['app_name'],
+                'value->repo_url' => $data['repo_url'],
             ]);
 
             Setting::updateOrCreate([
-                'key' => SettingsEnum::FIRST_REPO_URL,
+                'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value' => $data['repo_url'],
-            ]);
-
-            Setting::updateOrCreate([
-                'key' => SettingsEnum::CURRENT_ONBOARDING_STEP,
-            ], [
-                'value' => 'setup',
+                'value->step' => 'setup',
             ]);
         }
 
