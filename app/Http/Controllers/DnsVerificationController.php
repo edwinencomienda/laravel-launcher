@@ -23,6 +23,7 @@ class DnsVerificationController extends Controller
 
             // Get DNS records
             $dnsRecords = dns_get_record($domain, DNS_A);
+            dd($dnsRecords);
 
             if (empty($dnsRecords)) {
                 return response()->json([
