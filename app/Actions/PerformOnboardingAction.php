@@ -50,7 +50,7 @@ class PerformOnboardingAction
             $this->updateOnboardingStatus('Creating nginx site');
             $nginxSite = new CreateNginxSiteAction;
             $nginxSite->handle(
-                rootPath: "/home/raptor/{$siteDomain}",
+                rootPath: "/home/raptor/{$siteDomain}/public",
                 domain: $siteDomain,
             );
         });

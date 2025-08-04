@@ -30,7 +30,7 @@ class OnboardingController extends Controller
         return Inertia::render('onboarding', [
             'ip' => $ip,
             'sshPublicKey' => $sshPublicKey,
-            'currentStep' => $onboardingData['step'] ?? 1,
+            'onboardingData' => $onboardingData,
         ]);
     }
 
@@ -77,6 +77,8 @@ class OnboardingController extends Controller
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
                 'value->step' => 3,
+                'value->admin_domain' => $data['admin_domain'],
+                'value->site_domain' => $data['site_domain'],
             ]);
         } elseif ($request->step === 3) {
             $data = $request->validate([

@@ -28,7 +28,7 @@ const steps = [
     },
 ];
 
-export default function Onboarding({ ip, currentStep, sshPublicKey }: { ip: string; currentStep: OnboardingFormData["step"]; sshPublicKey: string }) {
+export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: string; sshPublicKey: string; onboardingData: OnboardingFormData }) {
     useEffect(() => {
         // force light mode
         document.documentElement.classList.remove("dark");
@@ -43,15 +43,15 @@ export default function Onboarding({ ip, currentStep, sshPublicKey }: { ip: stri
         site_domain: "edwin.sites.heyedwin.dev",
         app_name: "My Awesome App",
         repo_url: "https://github.com/edwinencomienda/laravel-demo-deploy",
-        step: currentStep,
+        step: onboardingData.step,
     });
 
     useEffect(() => {
         setForm((prev) => ({
             ...prev,
-            step: currentStep,
+            step: onboardingData.step || 1,
         }));
-    }, [currentStep]);
+    }, [onboardingData.step]);
 
     const handleSubmitForm = () => {
         onboardingForm.transform((data) => ({
