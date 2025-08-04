@@ -53,10 +53,11 @@ class PerformOnboardingAction
                 rootPath: "/home/raptor/{$siteDomain}/public",
                 domain: $siteDomain,
             );
+            // this is the admin panel to manage the sites and deployments
             $this->updateOnboardingStatus('Creating admin site');
             $nginxSite = new CreateNginxSiteAction;
             $nginxSite->handle(
-                rootPath: "/home/raptor/{$adminDomain}/public",
+                rootPath: '/home/raptor/raptor/public',
                 domain: $adminDomain,
             );
         });
