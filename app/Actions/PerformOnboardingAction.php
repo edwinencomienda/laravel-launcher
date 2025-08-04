@@ -44,8 +44,10 @@ class PerformOnboardingAction
 
             # set the db connection to mysql
             sed -i "s/^#\?DB_CONNECTION=.*/DB_CONNECTION=mysql/" .env
-            sed -i "s/^#\?DB_USERNAME=.*/DB_USERNAME=$(cat /home/raptor/.raptor/db_username)/" .env
-            sed -i "s/^#\?DB_PASSWORD=.*/DB_PASSWORD=$(cat /home/raptor/.raptor/db_password)/" .env
+            sed -i "s/^# *DB_DATABASE=.*/DB_DATABASE=$(cat /home/raptor/.raptor/db_database)/" .env
+            sed -i "s/^# *DB_USERNAME=.*/DB_USERNAME=$(cat /home/raptor/.raptor/db_username)/" .env
+            sed -i "s/^# *DB_PASSWORD=.*/DB_PASSWORD=$(cat /home/raptor/.raptor/db_password)/" .env
+
 
             php artisan config:cache
             php artisan migrate

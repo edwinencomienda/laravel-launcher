@@ -41,6 +41,7 @@ fi
 mkdir -p /home/"$CUSTOM_USER"/".$CUSTOM_USER"
 echo "$CUSTOM_USER" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_username
 echo "$MYSQL_USER_PASSWORD" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_password
+echo "$MYSQL_DEFAULT_DATABASE" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_database
 
 # ensure raptor user owns their home directory
 echo "Setting ownership of /home/$CUSTOM_USER to $CUSTOM_USER user..."
