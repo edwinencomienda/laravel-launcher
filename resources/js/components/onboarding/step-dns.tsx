@@ -25,7 +25,12 @@ export default function StepDns({ ip, form, setForm }: { ip: string; form: Onboa
 
             if (form.admin_domain) {
                 promises.push(
-                    fetch(`/api/verify-dns?domain=${encodeURIComponent(form.admin_domain)}&ip=${encodeURIComponent(ip)}`)
+                    fetch(
+                        route("verify-dns", {
+                            domain: form.admin_domain,
+                            ip,
+                        }),
+                    )
                         .then((res) => res.json())
                         .then((data) => ({ type: "admin", success: data.verified })),
                 );
@@ -33,7 +38,12 @@ export default function StepDns({ ip, form, setForm }: { ip: string; form: Onboa
 
             if (form.site_domain) {
                 promises.push(
-                    fetch(`/api/verify-dns?domain=${encodeURIComponent(form.site_domain)}&ip=${encodeURIComponent(ip)}`)
+                    fetch(
+                        route("verify-dns", {
+                            domain: form.site_domain,
+                            ip,
+                        }),
+                    )
                         .then((res) => res.json())
                         .then((data) => ({ type: "wildcard", success: data.verified })),
                 );
