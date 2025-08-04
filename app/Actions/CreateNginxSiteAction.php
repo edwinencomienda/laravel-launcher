@@ -51,6 +51,11 @@ class CreateNginxSiteAction
 
         # check and reload nginx
         sudo nginx -t && sudo nginx -s reload
+
+        # check if certbot is installed then run certbot
+        if command -v certbot &> /dev/null; then
+            certbot --nginx -d $domain
+        fi
         BASH;
 
         $result = Process::run($script)->throw();

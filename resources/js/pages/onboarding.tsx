@@ -80,7 +80,7 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
                     {form.step === 1 && <StepUser form={form} setForm={setForm} />}
                     {form.step === 2 && <StepDns ip={ip} form={form} setForm={setForm} />}
                     {form.step === 3 && <StepSshKey form={form} setForm={setForm} sshPublicKey={sshPublicKey} />}
-                    {form.step === 4 && <StepFinish />}
+                    {form.step === 4 && <StepFinish onboardingData={onboardingData} />}
 
                     {form.step !== 4 && (
                         <div className="mt-6 flex gap-2">

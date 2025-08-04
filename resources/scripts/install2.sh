@@ -123,7 +123,7 @@ if ! dpkg -l | grep -q nginx; then
     echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
     echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/nginx -t" >> /etc/sudoers.d/nginx
     echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/nginx -s reload" >> /etc/sudoers.d/nginx
-    
+
     # change the ownership of the sites-available and sites-enabled directories
     chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/nginx/sites-available/
     chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/nginx/sites-enabled/
@@ -132,6 +132,16 @@ if ! dpkg -l | grep -q nginx; then
 else
     echo "Nginx already installed."
 fi
+
+# install certbot
+if ! command -v certbot &> /dev/null; then
+    echo "Installing Certbot..."
+    apt-get install -y certbot python3-certbot-nginx
+    echo "Certbot installed."
+else
+    echo "Certbot already installed."
+fi
+
 
 # install unzip
 if ! command -v unzip &> /dev/null; then
@@ -180,7 +190,7 @@ fi
 # install mysql
 if ! dpkg -l | grep -q mysql-server; then
     echo "Installing MySQL..."
-    
+
     echo "mysql-server mysql-server/root_password password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
     echo "mysql-server mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
     apt-get install -y mysql-server
@@ -266,7 +276,7 @@ server {
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
     }
-} 
+}
 EOF
 
     # clone the raptor repository and setup
