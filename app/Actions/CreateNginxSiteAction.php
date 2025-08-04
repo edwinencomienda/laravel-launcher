@@ -52,9 +52,9 @@ class CreateNginxSiteAction
         # check and reload nginx
         sudo nginx -t && sudo nginx -s reload
 
-        # check if certbot is installed then run certbot
+        # check if certbot is installed then run certbot non-interactively
         if command -v certbot &> /dev/null; then
-            certbot --nginx -d $domain
+            certbot --nginx -d $domain --non-interactive --agree-tos --register-unsafely-without-email
         fi
         BASH;
 
