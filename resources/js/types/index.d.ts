@@ -51,4 +51,5 @@ export interface OnboardingFormData {
     app_name: string;
     repo_url: string;
     step: number;
+    dns_verified: boolean | null;
 }

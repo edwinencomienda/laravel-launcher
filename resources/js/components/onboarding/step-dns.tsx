@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OnboardingFormData } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CopyTextButton } from "../copy-text-button";
 import { Badge } from "../ui/badge";
@@ -11,6 +11,10 @@ export default function StepDns({ ip, form, setForm }: { ip: string; form: Onboa
     const [verifying, setVerifying] = useState(false);
     const [adminVerified, setAdminVerified] = useState<boolean | null>(null);
     const [websiteVerified, setWebsiteVerified] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        setForm({ ...form, dns_verified: adminVerified && websiteVerified });
+    }, [adminVerified, websiteVerified]);
 
     const verifyDNS = async () => {
         if (!form.admin_domain && !form.site_domain) {
@@ -93,7 +97,7 @@ export default function StepDns({ ip, form, setForm }: { ip: string; form: Onboa
 
             <div className="mb-6 space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="admin-domain">Admin Domain</Label>
+                    <Label htmlFor="admin-domain">Admin domain</Label>
                     <Input
                         id="admin-domain"
                         value={form.admin_domain}
@@ -113,7 +117,7 @@ export default function StepDns({ ip, form, setForm }: { ip: string; form: Onboa
                         placeholder="yourdomain.com"
                         className="mt-1"
                     />
-                    <p className="text-sm text-muted-foreground">Your main domain for sites</p>
+                    <p className="text-sm text-muted-foreground">Your domain name for your first site</p>
                 </div>
             </div>
 

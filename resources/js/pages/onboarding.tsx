@@ -44,7 +44,12 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
         app_name: "My Awesome App",
         repo_url: "https://github.com/edwinencomienda/laravel-demo-deploy",
         step: onboardingData.step,
+        dns_verified: false,
     });
+
+    const step1Valid = form.name && form.email && form.password;
+    const step2Valid = form.admin_domain && form.site_domain && form.dns_verified;
+    const step3Valid = form.repo_url && form.app_name;
 
     useEffect(() => {
         setForm((prev) => ({
@@ -89,7 +94,15 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
                                     Previous
                                 </Button>
                             )}
-                            <Button disabled={onboardingForm.processing} onClick={handleSubmitForm}>
+                            <Button
+                                disabled={
+                                    onboardingForm.processing ||
+                                    (form.step === 1 && !step1Valid) ||
+                                    (form.step === 2 && !step2Valid) ||
+                                    (form.step === 3 && !step3Valid)
+                                }
+                                onClick={handleSubmitForm}
+                            >
                                 {form.step === 3 ? "Deploy now" : "Continue"}
                             </Button>
                         </div>
