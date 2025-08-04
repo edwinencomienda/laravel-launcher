@@ -36,6 +36,12 @@ else
     echo "User '$CUSTOM_USER' already exists, skipping creation."
 fi
 
+
+# save the db password to user's home directory in /home/"$CUSTOM_USER"/"$CUSTOM_USER"
+mkdir -p /home/"$CUSTOM_USER"/".$CUSTOM_USER"
+echo "$CUSTOM_USER" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_username
+echo "$MYSQL_USER_PASSWORD" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_password
+
 # ensure raptor user owns their home directory
 echo "Setting ownership of /home/$CUSTOM_USER to $CUSTOM_USER user..."
 chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"
