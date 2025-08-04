@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Enums\SettingsEnum;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 
 class PerformOnboardingAction
@@ -20,30 +21,32 @@ class PerformOnboardingAction
         $adminDomain = Setting::getByKey(SettingsEnum::ADMIN_DOMAIN);
         $siteDomain = Setting::getByKey(SettingsEnum::SITE_DOMAIN);
 
-        // step 1: create user
-        $this->updateOnboardingStatus('Creating user');
-        $user = User::create([
-            'name' => $onboardingData['name'],
-            'email' => $onboardingData['email'],
-            'password' => $onboardingData['password'],
-        ]);
+        DB::transaction(function () use ($onboardingData, $siteDomain) {
+            // step 1: create user
+            $this->updateOnboardingStatus('Creating user');
+            $user = User::create([
+                'name' => $onboardingData['name'],
+                'email' => $onboardingData['email'],
+                'password' => $onboardingData['password'],
+            ]);
 
-        // step 2: clone repository
-        $this->updateOnboardingStatus('Cloning repository');
-        $repoUrl = convertGithubUrlToSshUrl($onboardingData['repo_url']);
-        $bash = <<<BASH
-        cd /home/raptor
-        git clone {$repoUrl} /home/raptor/{$siteDomain}
-        cd /home/raptor/{$siteDomain}
+            // step 2: clone repository
+            $this->updateOnboardingStatus('Cloning repository');
+            $repoUrl = convertGithubUrlToSshUrl($onboardingData['repo_url']);
+            $bash = <<<BASH
+            cd /home/raptor
+            git clone {$repoUrl} /home/raptor/{$siteDomain}
+            cd /home/raptor/{$siteDomain}
 
-        composer install --no-dev
-        cp .env.example .env
-        php artisan config:cache
-        php artisan key:generate
-        php artisan migrate
-        BASH;
+            composer install --no-dev
+            cp .env.example .env
+            php artisan config:cache
+            php artisan key:generate
+            php artisan migrate
+            BASH;
 
-        Process::run($bash)->throw();
+            Process::run($bash)->throw();
+        });
     }
 
     private function updateOnboardingStatus(string $message): void
