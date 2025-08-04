@@ -40,9 +40,9 @@ class PerformOnboardingAction
 
             composer install --no-dev
             cp .env.example .env
-            php artisan config:cache
-            php artisan key:generate
             php artisan migrate
+            php artisan key:generate
+            php artisan config:cache
             BASH;
             Process::run($bash)->throw();
 
