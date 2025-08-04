@@ -12,9 +12,9 @@ class OnboardingController extends Controller
 {
     private function getOnboardingData()
     {
-        $data = Setting::getByKey(SettingsEnum::CURRENT_ONBOARDING_DATA) ?: [];
+        $data = Setting::getByKey(SettingsEnum::CURRENT_ONBOARDING_DATA);
 
-        return json_decode($data, true);
+        return $data ? json_decode($data, true) : [];
     }
 
     public function index()
