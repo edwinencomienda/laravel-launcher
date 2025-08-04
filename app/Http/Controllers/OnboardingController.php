@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\PerformOnboardingAction;
 use App\Enums\SettingsEnum;
 use App\Models\Setting;
 use App\Rules\FqdnRule;
@@ -29,28 +30,32 @@ class OnboardingController extends Controller
         return Inertia::render('onboarding', [
             'ip' => $ip,
             'sshPublicKey' => $sshPublicKey,
-            'currentStep' => $onboardingData['step'] ?? 'admin_user',
+            'currentStep' => $onboardingData['step'] ?? 1,
         ]);
     }
 
-    public function store(Request $request)
-    {
+    public function store(
+        Request $request,
+        PerformOnboardingAction $performOnboardingAction
+    ) {
         $data = [];
 
-        if ($request->step === 'admin_user') {
+        if ($request->step === 1) {
             $data = $request->validate([
-                'username' => 'required|string|max:255',
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|max:255|email',
                 'password' => 'required|string|max:255',
             ]);
 
             Setting::updateOrCreate([
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value->username' => $data['username'],
-                'value->password' => $data['password'],
-                'value->step' => 'dns',
+                'value->name' => $data['name'],
+                'value->email' => $data['email'],
+                'value->password' => bcrypt($data['password']),
+                'value->step' => 2,
             ]);
-        } elseif ($request->step === 'dns') {
+        } elseif ($request->step === 2) {
             $data = $request->validate([
                 'admin_domain' => ['required', 'string', 'max:255', new FqdnRule],
                 'site_domain' => ['required', 'string', 'max:255', new FqdnRule],
@@ -71,9 +76,9 @@ class OnboardingController extends Controller
             Setting::updateOrCreate([
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value->step' => 'ssh_key',
+                'value->step' => 3,
             ]);
-        } elseif ($request->step === 'ssh_key') {
+        } elseif ($request->step === 3) {
             $data = $request->validate([
                 'app_name' => 'required|string|max:255',
                 'repo_url' => 'required|string|max:255',
@@ -86,10 +91,16 @@ class OnboardingController extends Controller
                 'value->repo_url' => $data['repo_url'],
             ]);
 
+            try {
+                $performOnboardingAction->handle();
+            } catch (\Exception $e) {
+                return back()->withErrors(['error' => $e->getMessage()]);
+            }
+
             Setting::updateOrCreate([
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value->step' => 'setup',
+                'value->step' => 4,
             ]);
         }
 

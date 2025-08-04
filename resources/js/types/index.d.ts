@@ -43,11 +43,12 @@ export interface User {
 }
 
 export interface OnboardingFormData {
-    username: string;
+    name: string;
+    email: string;
     password: string;
     admin_domain: string;
     site_domain: string;
     app_name: string;
     repo_url: string;
-    step: "dns" | "ssh_key" | "setup" | "admin_user";
+    step: number;
 }

@@ -6,19 +6,20 @@ export default function StepUser({ form, setForm }: { form: OnboardingFormData; 
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="username" className="block">
-                    Default Username
+                <Label htmlFor="name" className="block">
+                    Your Name
                 </Label>
-                <Input
-                    id="username"
-                    value={form.username || ""}
-                    onChange={(e) => setForm({ ...form, username: e.target.value })}
-                    placeholder="admin"
-                />
+                <Input id="name" value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Admin" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="email" className="block">
+                    Your Email
+                </Label>
+                <Input id="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="admin" />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="password" className="block">
-                    Default Password
+                    Your Password
                 </Label>
                 <Input
                     id="password"
