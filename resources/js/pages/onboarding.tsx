@@ -78,8 +78,8 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <Toaster />
-            <div>
-                <Card className="w-full max-w-lg">
+            <div className="w-full max-w-lg">
+                <Card className="w-full">
                     <CardHeader>
                         <CardTitle>{steps.find((step) => step.step === form.step)?.label}</CardTitle>
                     </CardHeader>
