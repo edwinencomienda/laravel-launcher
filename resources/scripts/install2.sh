@@ -7,6 +7,7 @@ CUSTOM_USER="raptor"
 LINUX_USER_PASSWORD="raptor"
 MYSQL_ROOT_PASSWORD="raptor"
 MYSQL_USER_PASSWORD="raptor"
+MYSQL_DEFAULT_DATABASE="raptor"
 
 echo "Welcome to the Raptor setup script!"
 
@@ -202,6 +203,17 @@ if ! dpkg -l | grep -q mysql-server; then
     # create mysql user
     echo "Creating MySQL user '$CUSTOM_USER'..."
     mysql -u root -p$MYSQL_ROOT_PASSWORD -e "CREATE USER '$CUSTOM_USER'@'localhost' IDENTIFIED BY '$MYSQL_USER_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$CUSTOM_USER'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+
+    # disable password expiration
+    echo "default_password_lifetime = 0" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+    RAM=$(awk '/^MemTotal:/{printf "%3.0f", $2 / (1024 * 1024)}' /proc/meminfo)
+    MAX_CONNECTIONS=$(( 70 * RAM ))
+    REAL_MAX_CONNECTIONS=$(( MAX_CONNECTIONS>70 ? MAX_CONNECTIONS : 100 ))
+    sed -i "s/^max_connections.*=.*/max_connections=${REAL_MAX_CONNECTIONS}/" /etc/mysql/mysql.conf.d/mysqld.cnf || echo "max_connections=${REAL_MAX_CONNECTIONS}" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+    # create default database
+    mysql -e "CREATE DATABASE $MYSQL_DEFAULT_DATABASE CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
 
     # allow user to manage mysql
     echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service mysql restart" > /etc/sudoers.d/mysql-restart
