@@ -4,9 +4,15 @@ import { CopyTextButton } from "../copy-text-button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-export default function StepSshKey({ form, setForm }: { form: OnboardingFormData; setForm: (form: any) => void }) {
-    const publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICopyThisKeyForYourServerSetup";
-
+export default function StepSshKey({
+    form,
+    setForm,
+    sshPublicKey,
+}: {
+    form: OnboardingFormData;
+    setForm: (form: any) => void;
+    sshPublicKey: string;
+}) {
     const verifySshKeyForm = useForm({});
     const handleVerifySshKey = () => {
         verifySshKeyForm.post(route("onboarding.verify-ssh-key"), {
@@ -22,8 +28,8 @@ export default function StepSshKey({ form, setForm }: { form: OnboardingFormData
                     or SSH key.
                 </p>
                 <div className="flex items-center gap-2 rounded border bg-muted p-3">
-                    <code className="font-mono text-sm break-all">{publicKey}</code>
-                    <CopyTextButton text={publicKey} />
+                    <code className="font-mono text-sm break-all">{sshPublicKey}</code>
+                    <CopyTextButton text={sshPublicKey} />
                 </div>
             </div>
             <div className="space-y-2">

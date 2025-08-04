@@ -23,7 +23,7 @@ class OnboardingController extends Controller
         $ip = exec('hostname -I | awk \'{print $1}\'') ?: '127.0.0.1';
         $sshPublicKey = file_exists('/home/raptor/.ssh/id_rsa.pub')
             ? file_get_contents('/home/raptor/.ssh/id_rsa.pub')
-            : null;
+            : 'n/a';
         $onboardingData = $this->getOnboardingData();
 
         return Inertia::render('onboarding', [

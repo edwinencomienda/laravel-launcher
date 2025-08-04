@@ -28,7 +28,7 @@ const steps = [
     },
 ];
 
-export default function Onboarding({ ip, currentStep }: { ip: string; currentStep: OnboardingFormData["step"] }) {
+export default function Onboarding({ ip, currentStep, sshPublicKey }: { ip: string; currentStep: OnboardingFormData["step"]; sshPublicKey: string }) {
     useEffect(() => {
         // force light mode
         document.documentElement.classList.remove("dark");
@@ -72,7 +72,7 @@ export default function Onboarding({ ip, currentStep }: { ip: string; currentSte
                 <CardContent>
                     {form.step === "admin_user" && <StepUser form={form} setForm={setForm} />}
                     {form.step === "dns" && <StepDns ip={ip} form={form} setForm={setForm} />}
-                    {form.step === "ssh_key" && <StepSshKey form={form} setForm={setForm} />}
+                    {form.step === "ssh_key" && <StepSshKey form={form} setForm={setForm} sshPublicKey={sshPublicKey} />}
                     {form.step === "setup" && <StepSetup />}
 
                     {form.step !== "setup" && (
