@@ -90,7 +90,7 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
                                 </Button>
                             )}
                             <Button disabled={onboardingForm.processing} onClick={handleSubmitForm}>
-                                {form.step === 3 ? "Submit and Create App" : "Continue"}
+                                {form.step === 3 ? "Deploy now" : "Continue"}
                             </Button>
                         </div>
                     )}

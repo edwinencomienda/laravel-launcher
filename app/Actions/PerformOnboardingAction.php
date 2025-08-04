@@ -21,7 +21,7 @@ class PerformOnboardingAction
         $adminDomain = Setting::getByKey(SettingsEnum::ADMIN_DOMAIN);
         $siteDomain = Setting::getByKey(SettingsEnum::SITE_DOMAIN);
 
-        DB::transaction(function () use ($onboardingData, $siteDomain) {
+        DB::transaction(function () use ($onboardingData, $siteDomain, $adminDomain) {
             // step 1: create user
             $this->updateOnboardingStatus('Creating user');
             $user = User::create([
@@ -52,6 +52,12 @@ class PerformOnboardingAction
             $nginxSite->handle(
                 rootPath: "/home/raptor/{$siteDomain}/public",
                 domain: $siteDomain,
+            );
+            $this->updateOnboardingStatus('Creating admin site');
+            $nginxSite = new CreateNginxSiteAction;
+            $nginxSite->handle(
+                rootPath: "/home/raptor/{$adminDomain}/public",
+                domain: $adminDomain,
             );
         });
     }
