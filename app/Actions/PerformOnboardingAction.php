@@ -44,8 +44,15 @@ class PerformOnboardingAction
             php artisan key:generate
             php artisan migrate
             BASH;
-
             Process::run($bash)->throw();
+
+            // step 3: create nginx site
+            $this->updateOnboardingStatus('Creating nginx site');
+            $nginxSite = new CreateNginxSiteAction;
+            $nginxSite->handle(
+                rootPath: "/home/raptor/{$siteDomain}",
+                domain: $siteDomain,
+            );
         });
     }
 

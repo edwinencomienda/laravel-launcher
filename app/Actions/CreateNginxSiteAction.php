@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use App\Services\SshService;
+use Illuminate\Support\Facades\Process;
 
 class CreateNginxSiteAction
 {
@@ -36,15 +36,7 @@ class CreateNginxSiteAction
         }
         EOF;
 
-        $ssh = new SshService(
-            host: '5.223.75.35',
-            user: 'raptor',
-        );
-
-        $ssh->connect();
-
-        $output = $ssh->runCommand(
-            <<<BASH
+        $script = <<<BASH
         set -e
 
         # delete if exists
@@ -56,12 +48,13 @@ class CreateNginxSiteAction
         EOF
 
         ln -s /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/$domain
-        
+
         # check and reload nginx
         sudo nginx -t && sudo nginx -s reload
-        BASH
-        );
+        BASH;
 
-        return $output;
+        $result = Process::run($script)->throw();
+
+        return $result->output();
     }
 }
