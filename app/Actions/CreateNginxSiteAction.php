@@ -18,10 +18,20 @@ class CreateNginxSiteAction
             root {$rootPath};
             index index.php index.html;
 
+            charset utf-8;
+
             client_max_body_size 25M;
 
-            #access_log /var/log/nginx/access.log;
-            #error_log /var/log/nginx/error.log;
+            add_header X-Frame-Options "SAMEORIGIN";
+            add_header X-XSS-Protection "1; mode=block";
+            add_header X-Content-Type-Options "nosniff";
+
+            location / {
+                try_files \$uri \$uri/ /index.php?\$query_string;
+            }
+
+            # access_log /var/log/nginx/access.log;
+            # error_log /var/log/nginx/error.log;
 
             location ~ \.php$ {
                 fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
@@ -30,9 +40,11 @@ class CreateNginxSiteAction
                 fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
             }
 
-            location / {
-                try_files \$uri \$uri/ /index.php?\$query_string;
+            location ~ /\.(?!well-known).* {
+                deny all;
             }
+
+            error_page 404 /index.php;
         }
         EOF;
 
