@@ -5,7 +5,7 @@ namespace App\Actions;
 use App\Enums\SettingsEnum;
 use App\Models\Setting;
 use App\Models\User;
-use App\Services\SshService;
+use Illuminate\Support\Facades\Process;
 
 class PerformOnboardingAction
 {
@@ -43,14 +43,7 @@ class PerformOnboardingAction
         php artisan migrate
         BASH;
 
-        $ssh = new SshService(
-            host: '5.223.75.35',
-            user: 'raptor',
-        );
-
-        $ssh->connect();
-
-        $output = $ssh->runCommand($bash);
+        Process::run($bash)->throw();
     }
 
     private function updateOnboardingStatus(string $message): void
