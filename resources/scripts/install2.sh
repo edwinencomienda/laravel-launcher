@@ -309,20 +309,15 @@ else
     echo "Default site already exists, skipping creation."
 fi
 
-# Display database credentials
-# echo ""
-# echo "=================================================="
-# echo "        SYSTEM CREDENTIALS"
-# echo "  ⚠️  COPY THESE NOW - SHOWN ONLY ONCE!"
-# echo "=================================================="
-# echo "Sudo User: $CUSTOM_USER"
-# echo "Sudo Password: $LINUX_USER_PASSWORD"
-# echo ""
-# echo "MySQL Database User: $CUSTOM_USER"
-# echo "MySQL Database Password: $MYSQL_USER_PASSWORD"
-# echo "=================================================="
-# echo ""
-
+echo ""
+echo "=================================================="
+echo "🚀  Setup complete! 🚀"
+echo "=================================================="
+echo "🔑  System Credentials:"
+echo "🔑  Sudo Password: $LINUX_USER_PASSWORD"
+echo "🔑  DB Password: $MYSQL_USER_PASSWORD"
+echo "Please make sure to copy these credentials now as they will not be shown again."
+echo "=================================================="
 echo "Starting onboarding process..."
 echo "Visit the onboarding URL: http://$IPV4:8081/onboarding"
 
