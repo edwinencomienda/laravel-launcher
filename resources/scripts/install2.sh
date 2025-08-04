@@ -137,6 +137,10 @@ fi
 if ! command -v certbot &> /dev/null; then
     echo "Installing Certbot..."
     apt-get install -y certbot python3-certbot-nginx
+
+    # add sudoers
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/bin/certbot *" > /etc/sudoers.d/certbot
+
     echo "Certbot installed."
 else
     echo "Certbot already installed."
