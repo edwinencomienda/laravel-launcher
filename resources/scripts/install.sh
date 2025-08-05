@@ -1,81 +1,103 @@
-#!/bin/bash
+#!/bin/sh
+
+set -e
 
 # Configuration variables
+CUSTOM_USER="raptor"
 LINUX_USER_PASSWORD="raptor"
 MYSQL_ROOT_PASSWORD="raptor"
 MYSQL_USER_PASSWORD="raptor"
+MYSQL_DEFAULT_DATABASE="raptor"
 
 echo "Welcome to the Raptor setup script!"
 
-echo "Current IPv4: $(curl -s ifconfig.me)"
 
-# create default web user
-if ! id "raptor" &>/dev/null; then
-    echo "Creating user 'raptor'..."
-    adduser --disabled-password --gecos "" raptor
-    echo "raptor:$LINUX_USER_PASSWORD" | chpasswd
-    echo "Password set for user 'raptor'."
-else
-    echo "User 'raptor' already exists, skipping creation."
+IPV4=$(hostname -I | awk '{print $1}')
+
+echo "Current IPv4: $IPV4"
+
+# check user must be root otherwise exit
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
 fi
+
+    # create default web user
+if ! id "$CUSTOM_USER" &>/dev/null; then
+    echo "Creating user '$CUSTOM_USER'..."
+    adduser --disabled-password --gecos "" "$CUSTOM_USER"
+    echo "$CUSTOM_USER:$LINUX_USER_PASSWORD" | chpasswd
+    echo "Password set for user '$CUSTOM_USER'."
+
+    # add user to sudo group
+    usermod -aG sudo "$CUSTOM_USER"
+    echo "User '$CUSTOM_USER' added to sudo group."
+else
+    echo "User '$CUSTOM_USER' already exists, skipping creation."
+fi
+
+
+# save the db password to user's home directory in /home/"$CUSTOM_USER"/"$CUSTOM_USER"
+mkdir -p /home/"$CUSTOM_USER"/".$CUSTOM_USER"
+echo "$CUSTOM_USER" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_username
+echo "$MYSQL_USER_PASSWORD" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_password
+echo "$MYSQL_DEFAULT_DATABASE" > /home/"$CUSTOM_USER"/".$CUSTOM_USER"/db_database
 
 # ensure raptor user owns their home directory
-echo "Setting ownership of /home/raptor to raptor user..."
-chown -R raptor:raptor /home/raptor
+echo "Setting ownership of /home/$CUSTOM_USER to $CUSTOM_USER user..."
+chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"
 
 # generate default ssh key if not exists
-if [ ! -f /home/raptor/.ssh/id_rsa ]; then
-    mkdir -p /home/raptor/.ssh
-    ssh-keygen -f /home/raptor/.ssh/id_rsa -t ed25519 -N '' -C "raptor@$(hostname)"
-    chown -R raptor:raptor /home/raptor/.ssh
-    chmod 700 /home/raptor/.ssh/id_rsa
+if [ ! -f /home/"$CUSTOM_USER"/.ssh/id_rsa ]; then
+    mkdir -p /home/"$CUSTOM_USER"/.ssh
+    ssh-keygen -f /home/"$CUSTOM_USER"/.ssh/id_rsa -t ed25519 -N '' -C "$CUSTOM_USER@$(hostname)"
+
+    # copy root authorized_keys to new user
+    cp /root/.ssh/authorized_keys /home/"$CUSTOM_USER"/.ssh/authorized_keys
+
+    # set ownership and permissions
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"/.ssh
+    chmod 600 /home/"$CUSTOM_USER"/.ssh/id_rsa
+    chmod 644 /home/"$CUSTOM_USER"/.ssh/authorized_keys
+    chmod 700 /home/"$CUSTOM_USER"/.ssh
 else
-    echo "SSH key for raptor already exists, skipping generation."
+    echo "SSH key for $CUSTOM_USER already exists, skipping generation."
 fi
 
-# add github, bitbucket, gitlab to known hosts if not already present
-if [ ! -f /home/raptor/.ssh/known_hosts ]; then
-    mkdir -p /home/raptor/.ssh
-    touch /home/raptor/.ssh/known_hosts
-    chmod 600 /home/raptor/.ssh/known_hosts
-    chown raptor:raptor /home/raptor/.ssh/known_hosts
-fi
 
-for host in github.com bitbucket.org gitlab.com; do
-    if ! grep -q "$host" /home/raptor/.ssh/known_hosts; then
-        ssh-keyscan -H $host >> /home/raptor/.ssh/known_hosts
-    fi
-done
+# add repositories for php and nginx
+echo "Adding repositories for PHP and Nginx..."
+add-apt-repository -y -n ppa:ondrej/nginx
+add-apt-repository -y -n ppa:ondrej/php
 
-chown raptor:raptor /home/raptor/.ssh/known_hosts
+echo "Updating package lists..."
+apt-get update
 
-# add user to sudo group
-if ! groups raptor | grep -q sudo; then
-    echo "Adding raptor to sudo group..."
-    usermod -aG sudo raptor
+
+# Add github, bitbucket, gitlab to root's known hosts if not already present
+if [ ! -f /root/.ssh/known_hosts ]; then
+    mkdir -p /root/.ssh
+    touch /root/.ssh/known_hosts
+    chmod 600 /root/.ssh/known_hosts
+
+    for host in github.com bitbucket.org gitlab.com; do
+        ssh-keyscan -H $host >> /root/.ssh/known_hosts
+    done
 else
-    echo "User 'raptor' is already in sudo group."
+    echo "Root known_hosts file already exists, skipping addition."
 fi
 
-# install unzip
-if ! command -v unzip &> /dev/null; then
-    echo "Installing Unzip..."
-    apt-get update
-    apt-get install -y unzip
-    echo "Unzip installed."
+# Copy known_hosts to custom user if not already present
+if [ ! -f /home/"$CUSTOM_USER"/.ssh/known_hosts ]; then
+    mkdir -p /home/"$CUSTOM_USER"/.ssh
+    cp /root/.ssh/known_hosts /home/"$CUSTOM_USER"/.ssh/known_hosts
+    chown "$CUSTOM_USER":"$CUSTOM_USER" /home/"$CUSTOM_USER"/.ssh/known_hosts
+    chmod 600 /home/"$CUSTOM_USER"/.ssh/known_hosts
 else
-    echo "Unzip already installed."
+    echo "Known hosts file already exists for $CUSTOM_USER, skipping copy."
 fi
 
-# install php 
-if ! grep -q "ondrej/php" /etc/apt/sources.list.d/* 2>/dev/null; then
-    echo "Adding PHP repository..."
-    add-apt-repository ppa:ondrej/php -y
-    apt update
-else
-    echo "PHP repository already added."
-fi
-
+# Install php and fpm
 if ! dpkg -l | grep -q php8.3-fpm; then
     echo "Installing PHP packages..."
     apt-get install -y \
@@ -86,51 +108,82 @@ if ! dpkg -l | grep -q php8.3-fpm; then
       php8.3-xml php8.3-zip php8.3-bcmath php8.3-soap \
       php8.3-intl php8.3-readline php8.3-gmp \
       php8.3-redis php8.3-msgpack php8.3-igbinary
+
+    # update default user of php-cli
+    sed -i "s/user = www-data/user = $CUSTOM_USER/" /etc/php/8.3/cli/php.ini
+    sed -i "s/group = www-data/group = $CUSTOM_USER/" /etc/php/8.3/cli/php.ini
+
+    # update default user of php-fpm
+    sed -i "s/user = www-data/user = $CUSTOM_USER/" /etc/php/8.3/fpm/pool.d/www.conf
+    sed -i "s/group = www-data/group = $CUSTOM_USER/" /etc/php/8.3/fpm/pool.d/www.conf
+
+    systemctl restart php8.3-fpm
 else
     echo "PHP packages already installed."
 fi
+
+if ! dpkg -l | grep -q nginx; then
+    echo "Installing Nginx..."
+    apt-get install -y nginx
+    sed -i "s/user www-data;/user $CUSTOM_USER;/" /etc/nginx/nginx.conf
+
+    # allow user to manage nginx
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/nginx -t" >> /etc/sudoers.d/nginx
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/nginx -s reload" >> /etc/sudoers.d/nginx
+
+    # change the ownership of the sites-available and sites-enabled directories
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/nginx/sites-available/
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/nginx/sites-enabled/
+
+    systemctl restart nginx
+else
+    echo "Nginx already installed."
+fi
+
+# install certbot
+if ! command -v certbot &> /dev/null; then
+    echo "Installing Certbot..."
+    apt-get install -y certbot python3-certbot-nginx
+
+    # add sudoers
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/bin/certbot *" > /etc/sudoers.d/certbot
+
+    echo "Certbot installed."
+else
+    echo "Certbot already installed."
+fi
+
+
+# install unzip
+if ! command -v unzip &> /dev/null; then
+    echo "Installing Unzip..."
+    apt-get install -y unzip
+    echo "Unzip installed."
+else
+    echo "Unzip already installed."
+fi
+
+# allow user to manage ufw
+if ! grep -q "/usr/sbin/ufw" /etc/sudoers.d/ufw 2>/dev/null; then
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/ufw *" > /etc/sudoers.d/ufw
+    echo "Added $CUSTOM_USER permission to manage ufw."
+else
+    echo "$CUSTOM_USER already has permission to manage ufw."
+fi
+
 
 # install composer
 if [ ! -f /usr/local/bin/composer ]; then
   echo "Installing Composer..."
   curl -sS https://getcomposer.org/installer | php
   mv composer.phar /usr/local/bin/composer
+  chmod +x /usr/local/bin/composer
 
-  echo "raptor ALL=(root) NOPASSWD: /usr/local/bin/composer self-update*" > /etc/sudoers.d/composer
+  echo "$CUSTOM_USER ALL=NOPASSWD: /usr/local/bin/composer *" > /etc/sudoers.d/composer
+  chmod 440 /etc/sudoers.d/composer
 else
   echo "Composer already installed."
-fi
-
-# update PHP memory limit and upload size
-if ! grep -q "memory_limit = 512M" /etc/php/8.3/fpm/php.ini; then
-    echo "Updating PHP configuration..."
-    sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/8.3/fpm/php.ini
-    sed -i "s/upload_max_filesize = .*/upload_max_filesize = 128M/" /etc/php/8.3/fpm/php.ini
-    sed -i "s/post_max_size = .*/post_max_size = 128M/" /etc/php/8.3/fpm/php.ini
-    systemctl restart php8.3-fpm
-else
-    echo "PHP configuration already updated."
-fi
-
-# Update PHP-FPM Configuration
-if ! grep -q "user = raptor" /etc/php/8.3/fpm/pool.d/www.conf; then
-    echo "Updating PHP-FPM configuration..."
-    sed -i "s/user = www-data/user = raptor/" /etc/php/8.3/fpm/pool.d/www.conf
-    sed -i "s/group = www-data/group = raptor/" /etc/php/8.3/fpm/pool.d/www.conf
-    sed -i "s/^pm.max_children.*/pm.max_children = 20/" /etc/php/8.3/fpm/pool.d/www.conf
-    systemctl restart php8.3-fpm
-else
-    echo "PHP-FPM configuration already updated."
-fi
-
-if ! grep -q "^raptor ALL=NOPASSWD: /usr/sbin/service mysql restart" /etc/sudoers.d/mysql-restart 2>/dev/null; then
-  echo "raptor ALL=NOPASSWD: /usr/sbin/service mysql restart" > /etc/sudoers.d/mysql-restart
-fi
-if ! grep -q "^raptor ALL=NOPASSWD: /usr/sbin/service php8.3-fpm restart" /etc/sudoers.d/php-fpm-restart 2>/dev/null; then
-  echo "raptor ALL=NOPASSWD: /usr/sbin/service php8.3-fpm restart" > /etc/sudoers.d/php-fpm-restart
-fi
-if ! grep -q "^raptor ALL=NOPASSWD: /usr/sbin/service supervisor restart" /etc/sudoers.d/supervisor-restart 2>/dev/null; then
-  echo "raptor ALL=NOPASSWD: /usr/sbin/service supervisor restart" > /etc/sudoers.d/supervisor-restart
 fi
 
 # install nodejs and npm
@@ -149,59 +202,32 @@ fi
 # install mysql
 if ! dpkg -l | grep -q mysql-server; then
     echo "Installing MySQL..."
-    echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
-    echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
-    apt-get install -y mysql-community-server
+
+    echo "mysql-server mysql-server/root_password password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
+    echo "mysql-server mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD" | debconf-set-selections
     apt-get install -y mysql-server
+
+    # create mysql user
+    echo "Creating MySQL user '$CUSTOM_USER'..."
+    mysql -u root -p$MYSQL_ROOT_PASSWORD -e "CREATE USER '$CUSTOM_USER'@'localhost' IDENTIFIED BY '$MYSQL_USER_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO '$CUSTOM_USER'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+
+    # disable password expiration
+    echo "default_password_lifetime = 0" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+    RAM=$(awk '/^MemTotal:/{printf "%3.0f", $2 / (1024 * 1024)}' /proc/meminfo)
+    MAX_CONNECTIONS=$(( 70 * RAM ))
+    REAL_MAX_CONNECTIONS=$(( MAX_CONNECTIONS>70 ? MAX_CONNECTIONS : 100 ))
+    sed -i "s/^max_connections.*=.*/max_connections=${REAL_MAX_CONNECTIONS}/" /etc/mysql/mysql.conf.d/mysqld.cnf || echo "max_connections=${REAL_MAX_CONNECTIONS}" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+    # create default database
+    mysql -e "CREATE DATABASE $MYSQL_DEFAULT_DATABASE CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
+
+    # allow user to manage mysql
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service mysql restart" > /etc/sudoers.d/mysql-restart
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service mysql stop" >> /etc/sudoers.d/mysql-restart
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/sbin/service mysql start" >> /etc/sudoers.d/mysql-restart
 else
     echo "MySQL already installed."
-fi
-
-# create mysql user
-if ! mysql -u root -p$MYSQL_ROOT_PASSWORD -e "SELECT User FROM mysql.user WHERE User='raptor' AND Host='localhost';" 2>/dev/null | grep -q raptor; then
-    echo "Creating MySQL user 'raptor'..."
-    mysql -u root -p$MYSQL_ROOT_PASSWORD -e "CREATE USER 'raptor'@'localhost' IDENTIFIED BY '$MYSQL_USER_PASSWORD'; GRANT ALL PRIVILEGES ON *.* TO 'raptor'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
-else
-    echo "MySQL user 'raptor' already exists."
-fi
-
-# install nginx
-if ! dpkg -l | grep -q nginx; then
-    echo "Installing Nginx..."
-    apt-get install -y nginx
-    systemctl enable nginx
-    systemctl start nginx
-else
-    echo "Nginx already installed."
-fi
-
-# Configure Primary Nginx Settings
-if ! grep -q "user raptor;" /etc/nginx/nginx.conf; then
-    echo "Configuring Nginx..."
-    sed -i "s/user www-data;/user raptor;/" /etc/nginx/nginx.conf
-    sed -i "s/worker_processes.*/worker_processes auto;/" /etc/nginx/nginx.conf
-    sed -i "s/# multi_accept.*/multi_accept on;/" /etc/nginx/nginx.conf
-    sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 128;/" /etc/nginx/nginx.conf
-
-    service nginx restart
-else
-    echo "Nginx configuration already updated."
-fi
-
-# install certbot
-if ! command -v certbot &> /dev/null; then
-    echo "Installing Certbot..."
-    apt-get update
-    apt-get install -y certbot python3-certbot-nginx
-else
-    echo "Certbot already installed."
-fi
-
-# Allow raptor user to manage certbot
-if ! grep -q "^raptor ALL=NOPASSWD: /usr/bin/certbot" /etc/sudoers.d/certbot 2>/dev/null; then
-    echo "raptor ALL=NOPASSWD: /usr/bin/certbot *" > /etc/sudoers.d/certbot
-    echo "raptor ALL=NOPASSWD: /usr/sbin/service nginx reload" >> /etc/sudoers.d/certbot
-    echo "raptor ALL=NOPASSWD: /usr/sbin/service nginx restart" >> /etc/sudoers.d/certbot
 fi
 
 # configure firewall
@@ -223,230 +249,95 @@ else
     ufw allow 443/tcp 2>/dev/null || true
 fi
 
-# Create default web directory
-if [ ! -d /home/raptor/default ]; then
-    echo "Creating default web directory..."
-    mkdir -p /home/raptor/default
-    chown -R raptor:raptor /home/raptor/default
-    chmod 755 /home/raptor/default
-fi
-
-# Create default index.php
-if [ ! -f /home/raptor/default/index.php ]; then
-    echo "Creating default index.php..."
-    cat > /home/raptor/default/index.php << 'EOF'
-<?php
-echo "raptor configured successfully";
-EOF
-    chown raptor:raptor /home/raptor/default/index.php
-    chmod 644 /home/raptor/default/index.php
-fi
-
-# Configure default site to serve index.php
-if [ ! -f /etc/nginx/sites-available/default ] || ! grep -q "index index.php" /etc/nginx/sites-available/default; then
-    echo "Configuring default Nginx site..."
-    cat > /etc/nginx/sites-available/default << 'EOF'
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    
-    root /home/raptor/default;
-    index index.php index.html index.htm;
-    
-    server_name _;
-    
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-    }
-    
-    location ~ /\.ht {
-        deny all;
-    }
-}
-EOF
-    
-    # Enable the site and restart nginx
-    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
-    service nginx restart
-else
-    echo "Default Nginx site already configured."
-fi
-
-# Configure raptor Laravel application on port 8081
-if [ ! -f /etc/nginx/sites-available/raptor ]; then
-    echo "Configuring Raptor Laravel application site..."
-    cat > /etc/nginx/sites-available/raptor << 'EOF'
-server {
-    listen 8081;
-    listen [::]:8081;
-    
-    root /home/raptor/raptor/public;
-    index index.php index.html index.htm;
-    
-    server_name _;
-    
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-    
-    location ~ /\.ht {
-        deny all;
-    }
-    
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
-EOF
-    
-    # Enable the raptor site
-    ln -sf /etc/nginx/sites-available/raptor /etc/nginx/sites-enabled/
-    service nginx restart
-else
-    echo "Raptor Laravel application site already configured."
-fi
 
 # install supervisord
-if ! dpkg -l | grep -q supervisor; then
+if ! dpkg -l | grep -q supervisor || [ "$(stat -c %U /etc/supervisor/conf.d 2>/dev/null)" != "$CUSTOM_USER" ]; then
     echo "Installing Supervisor..."
     apt-get install -y supervisor
     systemctl enable supervisor
     systemctl start supervisor
 
-     # Allow raptor user to control supervisor
-    echo "raptor ALL=NOPASSWD: /usr/bin/supervisorctl *" > /etc/sudoers.d/supervisor
+    # allow user to manage supervisor
+    echo "$CUSTOM_USER ALL=NOPASSWD: /usr/bin/supervisorctl *" > /etc/sudoers.d/supervisor
 
-    # Restart supervisor to apply configuration
+    # restart supervisor to apply configuration
     systemctl restart supervisor
-else
-    echo "Supervisor already installed."
-fi
 
-# Allow raptor user to manage supervisor conf files
-if [ "$(stat -c %U /etc/supervisor/conf.d 2>/dev/null)" != "raptor" ]; then
-    echo "Setting raptor as owner of supervisor conf.d directory..."
-    chown -R raptor:raptor /etc/supervisor/conf.d/
+    # set raptor as owner of supervisor conf.d directory
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/supervisor/conf.d/
     chmod 755 /etc/supervisor/conf.d/
-    echo "Raptor user can now manage supervisor configuration files."
+    echo "$CUSTOM_USER user can now manage supervisor configuration files."
 else
-    echo "Supervisor conf.d directory already owned by raptor."
+    echo "Supervisor already installed and configured."
 fi
 
-# create directory for raptor
-if [ ! -d /home/raptor/raptor ]; then
-    echo "Creating raptor directory..."
-    mkdir -p /home/raptor/raptor
-    chmod 755 /home/raptor/raptor
-else
-    echo "Raptor directory already exists."
-fi
+# remove the default nginx site
+rm -f /etc/nginx/sites-available/default
+rm -f /etc/nginx/sites-enabled/default
 
-# install bunjs as raptor user
-if ! command -v bun &> /dev/null; then
-    echo "Installing Bun as raptor..."
-    sudo -i -u raptor bash -c "curl -fsSL https://bun.sh/install | bash && source /home/raptor/.bashrc"
-    echo "Bun installed."
-else
-    echo "Bun already installed."
-fi
+# create the new default site if not exists
+if [ ! -f /etc/nginx/sites-available/default ]; then
+cat <<EOF > /etc/nginx/sites-available/default
+server {
+    listen 8081;
+    server_name $IPV4;
+    root /home/$CUSTOM_USER/raptor/public;
+    index index.php index.html;
 
-# clone raptor from github
-if [ ! -d /home/raptor/raptor/.git ]; then
-    echo "Cloning raptor from github..."
-    git clone https://github.com/edwinencomienda/laravel-launcher.git /home/raptor/raptor
-    echo "Raptor cloned from github."
+    charset utf-8;
 
-    chown -R raptor:raptor /home/raptor/raptor
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
 
-    cd /home/raptor/raptor
-    su - raptor -c "cd /home/raptor/raptor && cp .env.example .env"
-    su - raptor -c "cd /home/raptor/raptor && composer install --no-dev"
-    su - raptor -c "cd /home/raptor/raptor && /home/raptor/raptor/artisan key:generate"
-    su - raptor -c "cd /home/raptor/raptor && /home/raptor/raptor/artisan config:cache"
-    su - raptor -c "cd /home/raptor/raptor && /home/raptor/.bun/bin/bun install"
-    su - raptor -c "cd /home/raptor/raptor && /home/raptor/.bun/bin/bun run build"
+    client_max_body_size 25M;
 
-    # create database sqlite file
-    su - raptor -c "cd /home/raptor/raptor && touch database/database.sqlite"
-    su - raptor -c "cd /home/raptor/raptor && chmod 755 database/database.sqlite"
-    su - raptor -c "cd /home/raptor/raptor && chmod 644 database/database.sqlite"
-    su - raptor -c "/home/raptor/raptor/artisan migrate"
-    su - raptor -c "/home/raptor/raptor/artisan db:seed"
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
 
-    echo "Raptor control panel setup complete."
-else
-    echo "Raptor already cloned from github."
-fi
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+    }
 
-chown -R raptor:raptor /home/raptor/raptor
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
 
-# configure supervisor for raptor scheduler and queue worker
-if [ ! -f /etc/supervisor/conf.d/raptor.conf ]; then
-    echo "Configuring Supervisor for Raptor..."
-    cat > /etc/supervisor/conf.d/raptor.conf <<EOF
-[program:raptor-scheduler]
-command=/home/raptor/raptor/artisan schedule:work
-directory=/home/raptor/raptor
-autostart=true
-autorestart=true
-user=raptor
-numprocs=1
-process_name=%(program_name)s_%(process_num)02d
-startretries=3
-startsecs=10
-stopwaitsecs=60
-redirect_stderr=true
-stdout_logfile=/var/log/supervisor/raptor-scheduler.log
-stdout_logfile_maxbytes=50MB
-stdout_logfile_backups=10
-
-[program:raptor-queue-worker]
-command=/home/raptor/raptor/artisan queue:work --sleep=3 --tries=3 --max-time=3600
-directory=/home/raptor/raptor
-autostart=true
-autorestart=true
-user=raptor
-numprocs=2
-process_name=%(program_name)s_%(process_num)02d
-startretries=3
-startsecs=10
-stopwaitsecs=60
-redirect_stderr=true
-stdout_logfile=/var/log/supervisor/raptor-queue-worker.log
-stdout_logfile_maxbytes=50MB
-stdout_logfile_backups=10
+    error_page 404 /index.php;
+}
 EOF
-    supervisorctl reread
-    supervisorctl update
+
+    # clone the raptor repository and setup
+    git clone https://github.com/edwinencomienda/laravel-launcher.git /home/$CUSTOM_USER/raptor
+    cd /home/$CUSTOM_USER/raptor && composer install
+    cd /home/$CUSTOM_USER/raptor && cp .env.example .env
+    php /home/$CUSTOM_USER/raptor/artisan key:generate
+    php /home/$CUSTOM_USER/raptor/artisan migrate
+
+    chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/$CUSTOM_USER/raptor
+    chmod -R 755 /home/$CUSTOM_USER/raptor
+
+    # restart nginx and enable the default site
+    ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+    nginx -t && nginx -s reload
 else
-    echo "Supervisor for Raptor already configured."
+    echo "Default site already exists, skipping creation."
 fi
 
+echo ""
+echo "=================================================="
+echo "🚀  Setup complete! 🚀"
+echo "=================================================="
+echo "🔑  System Credentials:"
+echo "🔑  Sudo Password: $LINUX_USER_PASSWORD"
+echo "🔑  DB Password: $MYSQL_USER_PASSWORD"
+echo "Please make sure to copy these credentials now as they will not be shown again."
+echo "=================================================="
+echo "Starting onboarding process..."
+echo "Visit the onboarding URL: http://$IPV4:8081/onboarding"
 
-# Display database credentials
-echo ""
-echo "=================================================="
-echo "        SYSTEM CREDENTIALS"
-echo "  ⚠️  COPY THESE NOW - SHOWN ONLY ONCE!"
-echo "=================================================="
-echo "Sudo User: raptor"
-echo "Sudo Password: $LINUX_USER_PASSWORD"
-echo ""
-echo "MySQL Database User: raptor"
-echo "MySQL Database Password: $MYSQL_USER_PASSWORD"
-echo "=================================================="
-echo ""
-
-echo "Setup complete!"
+echo "Setup complete! 🚀"

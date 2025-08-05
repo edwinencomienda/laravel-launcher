@@ -22,10 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
-Route::get('/install', function () {
-    return response(file_get_contents(resource_path('scripts/install2.sh')))
-        ->header('Content-Type', 'text/plain');
-});
+Route::get('/install', [\App\Http\Controllers\InstallScriptController::class, 'index']);
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
