@@ -4,7 +4,7 @@
 if (! function_exists('convertGithubUrlToSshUrl')) {
     function convertGithubUrlToSshUrl(string $url): string
     {
-        return str_replace('https://github.com/', 'git@github.com:', $url);
+        return 'git@github.com:'.preg_replace('#^https://github.com/#', '', rtrim($url, '.git'));
     }
 }
 
