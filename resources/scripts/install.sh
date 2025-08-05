@@ -213,11 +213,11 @@ if ! dpkg -l | grep -q mysql-server; then
 
     # disable password expiration
     echo "default_password_lifetime = 0" >> /etc/mysql/mysql.conf.d/mysqld.cnf
-
+    # configure max connections
     RAM=$(awk '/^MemTotal:/{printf "%3.0f", $2 / (1024 * 1024)}' /proc/meminfo)
     MAX_CONNECTIONS=$(( 70 * RAM ))
     REAL_MAX_CONNECTIONS=$(( MAX_CONNECTIONS>70 ? MAX_CONNECTIONS : 100 ))
-    sed -i "s/^max_connections.*=.*/max_connections=${REAL_MAX_CONNECTIONS}/" /etc/mysql/mysql.conf.d/mysqld.cnf || echo "max_connections=${REAL_MAX_CONNECTIONS}" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+    echo "max_connections=${REAL_MAX_CONNECTIONS}" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 
     # create default database
     mysql -e "CREATE DATABASE $MYSQL_DEFAULT_DATABASE CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
