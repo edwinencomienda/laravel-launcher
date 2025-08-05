@@ -24,7 +24,7 @@ class PerformOnboardingAction
         DB::transaction(function () use ($onboardingData, $siteDomain, $adminDomain) {
             // step 1: create user
             $this->updateOnboardingStatus('Creating user');
-            $user = User::create([
+            User::create([
                 'name' => $onboardingData['name'],
                 'email' => $onboardingData['email'],
                 'password' => $onboardingData['password'],
