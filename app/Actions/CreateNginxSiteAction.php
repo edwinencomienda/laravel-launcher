@@ -63,13 +63,6 @@ class CreateNginxSiteAction
 
         # check and reload nginx
         sudo nginx -t && sudo nginx -s reload
-
-        # check if certbot is installed and certs don't already exist for this domain
-        if command -v certbot &> /dev/null; then
-            if [ ! -d "/etc/letsencrypt/live/$domain" ]; then
-                sudo certbot --nginx -d $domain --non-interactive --agree-tos --register-unsafely-without-email
-            fi
-        fi
         BASH;
 
         $result = Process::run($script)->throw();

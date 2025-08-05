@@ -68,6 +68,12 @@ class PerformOnboardingAction
                 rootPath: '/home/raptor/raptor/public',
                 domain: $adminDomain,
             );
+
+            // step 4: generate domain ssl
+            $this->updateOnboardingStatus('Generating domain ssl');
+            $domains = [$siteDomain, $adminDomain];
+            $ssl = new GenerateDomainSslAction;
+            $ssl->handle($domains);
         });
     }
 
