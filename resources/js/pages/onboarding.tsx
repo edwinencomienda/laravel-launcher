@@ -37,13 +37,13 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
 
     const onboardingForm = useForm<Record<string, string>>({});
     const [form, setForm] = useState<OnboardingFormData>({
-        name: "Admin",
-        email: "admin@email.com",
-        password: "password",
-        admin_domain: "admin.heyedwin.dev",
-        site_domain: "edwin.sites.heyedwin.dev",
-        app_name: "My Awesome App",
-        repo_url: "https://github.com/edwinencomienda/laravel-demo-deploy",
+        name: onboardingData.name || "Admin",
+        email: onboardingData.email || "admin@email.com",
+        password: onboardingData.password || "password",
+        admin_domain: onboardingData.admin_domain || "admin.heyedwin.dev",
+        site_domain: onboardingData.site_domain || "edwin.sites.heyedwin.dev",
+        app_name: onboardingData.app_name || "My Awesome App",
+        repo_url: onboardingData.repo_url || "https://github.com/edwinencomienda/laravel-demo-deploy",
         step: onboardingData.step,
         dns_verified: false,
     });
