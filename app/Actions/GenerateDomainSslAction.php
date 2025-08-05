@@ -11,7 +11,7 @@ class GenerateDomainSslAction
         $domainsString = implode(' -d ', $domains);
 
         $script = <<<BASH
-        sudo certbot --nginx $domainsString --non-interactive --agree-tos --register-unsafely-without-email
+        sudo certbot --nginx -d $domainsString --non-interactive --agree-tos --register-unsafely-without-email
         BASH;
 
         $result = Process::run($script)->throw();
