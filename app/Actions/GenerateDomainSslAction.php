@@ -6,12 +6,15 @@ use Illuminate\Support\Facades\Process;
 
 class GenerateDomainSslAction
 {
-    public function handle(array $domains)
+    public function handle(string $domain)
     {
-        $domainsString = implode(' -d ', $domains);
+        $checkScript = "test -f /etc/letsencrypt/live/$domain/fullchain.pem";
+        if (Process::run($checkScript)->successful()) {
+            return;
+        }
 
         $script = <<<BASH
-        sudo certbot --nginx -d $domainsString --non-interactive --agree-tos --register-unsafely-without-email
+        sudo certbot --nginx -d $domain --non-interactive --agree-tos --register-unsafely-without-email
         BASH;
 
         $result = Process::run($script)->throw();

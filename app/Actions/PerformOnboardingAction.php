@@ -71,9 +71,17 @@ class PerformOnboardingAction
 
             // step 4: generate domain ssl
             $this->updateOnboardingStatus('Generating domain ssl');
-            $domains = [$siteDomain, $adminDomain];
             $ssl = new GenerateDomainSslAction;
-            $ssl->handle($domains);
+            $ssl->handle(
+                domain: $siteDomain,
+            );
+            $ssl->handle(
+                domain: $adminDomain,
+            );
+
+            // reload nginx
+            $this->updateOnboardingStatus('Reloading nginx');
+            Process::run('sudo nginx -t && sudo nginx -s reload')->throw();
         });
     }
 
