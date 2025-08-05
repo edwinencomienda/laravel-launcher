@@ -15,38 +15,36 @@ class DnsVerificationController extends Controller
             'ip' => 'required|string|ip',
         ]);
 
-        $domain = $request->input('domain');
-        // $expectedIp = $request->input('ip');
-        $expectedIp = '5.223.75.35';
+        $domain = preg_replace('/^https?:\/\//', '', $request->input('domain'));
+        $expectedIp = $request->input('ip');
 
-        try {
-            // Remove protocol if present
-            $domain = preg_replace('/^https?:\/\//', '', $domain);
+        $nameservers = [
+            '1.1.1.1', // Cloudflare
+            '8.8.8.8', // Google
+            '9.9.9.9', // Quad9
+        ];
 
-            // Get DNS records
-            $dnsRecords = dns_get_record($domain, DNS_A);
+        $verified = false;
+        $recordsByNS = [];
 
-            if (empty($dnsRecords)) {
-                return response()->json([
-                    'verified' => false,
-                    'message' => 'No A records found for domain',
-                ]);
+        foreach ($nameservers as $ns) {
+            $cmd = escapeshellcmd("dig @$ns +short A $domain");
+            $output = shell_exec($cmd);
+            $ips = array_filter(array_map('trim', explode("\n", $output)));
+
+            $recordsByNS[$ns] = $ips;
+
+            if (in_array($expectedIp, $ips)) {
+                $verified = true;
             }
-
-            // Check if any A record matches the expected IP
-            $verified = collect($dnsRecords)->contains('ip', $expectedIp);
-
-            return response()->json([
-                'verified' => $verified,
-                'message' => $verified ? 'DNS record verified' : 'DNS record does not match expected IP',
-                'found_records' => collect($dnsRecords)->pluck('ip')->toArray(),
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'verified' => false,
-                'message' => 'Failed to verify DNS record: '.$e->getMessage(),
-            ], 500);
         }
+
+        return response()->json([
+            'verified' => $verified,
+            'message' => $verified
+                ? 'DNS record verified via public resolvers.'
+                : 'DNS record not yet propagated to public resolvers.',
+            'records' => $recordsByNS,
+        ]);
     }
 }
