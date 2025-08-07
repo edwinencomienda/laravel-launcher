@@ -27,6 +27,7 @@ class OnboardingController extends Controller
             ? file_get_contents('/home/raptor/.ssh/id_rsa.pub')
             : 'n/a';
         $onboardingData = $this->getOnboardingData();
+        $currentStep = $onboardingData['step'] ?? 1;
 
         $githubManifest = [
             'name' => 'Raptor Deploy',
@@ -54,7 +55,7 @@ class OnboardingController extends Controller
             'onboardingData' => $onboardingData,
             'githubManifest' => $githubManifest,
             'query' => $request->query(),
-            'repos' => Inertia::defer(fn () => (new GetGithubRepoListAction)->handle()),
+            'repos' => $currentStep === 4 ? (new GetGithubRepoListAction)->handle() : [],
         ]);
     }
 
