@@ -16,7 +16,7 @@ class DnsVerificationController extends Controller
         ]);
 
         $domain = preg_replace('/^https?:\/\//', '', $request->input('domain'));
-        $expectedIp = $request->input('ip');
+        $expectedIp = config('app.test_verify_ip') ?? $request->input('ip');
 
         $nameservers = [
             '1.1.1.1', // Cloudflare

@@ -49,7 +49,14 @@ export interface OnboardingFormData {
     admin_domain: string;
     site_domain: string;
     app_name: string;
-    repo_url: string;
+    repo_name: string;
     step: number;
     dns_verified: boolean | null;
+}
+
+export interface GithubRepo {
+    id: number;
+    name: string;
+    full_name: string;
+    ssh_url: string;
 }

@@ -1,0 +1,1 @@
+<a href="https://github.com/apps/{{ $appSlug }}/installations/new">Install GitHub App</a>

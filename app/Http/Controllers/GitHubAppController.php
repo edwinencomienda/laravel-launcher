@@ -2,37 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SettingsEnum;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class GitHubAppController extends Controller
 {
-    public function redirect()
-    {
-        $manifest = [
-            'name' => 'Raptor App',
-            'url' => url('/'),
-            'redirect_url' => url('/github/callback'),
-            'setup_url' => url('/github/setup'),
-            'callback_urls' => [
-                url('/github/callback'),
-            ],
-            'hook_attributes' => [
-                'url' => url('/github/webhook'),
-            ],
-            'public' => false,
-            'default_permissions' => [
-                'contents' => 'read',
-            ],
-            'default_events' => [
-                'push',
-            ],
-        ];
-
-        return view('github-redirect', compact('manifest'));
-    }
-
     public function callback(Request $request)
     {
         $code = $request->input('code');
@@ -50,9 +27,9 @@ class GitHubAppController extends Controller
 
         if ($response->successful()) {
             $appConfig = $response->json();
-            Storage::put('github_response.json', json_encode($appConfig));
+            Storage::put('github_app_config.json', json_encode($appConfig));
 
-            return response()->json(['message' => 'GitHub App created successfully', 'config' => $appConfig]);
+            return to_route('github.install');
         }
 
         return response()->json([
@@ -63,23 +40,31 @@ class GitHubAppController extends Controller
 
     public function install()
     {
-        $appConfig = Storage::get('github_response');
+        $appConfig = Storage::get('github_app_config.json');
         $appConfig = json_decode($appConfig, true);
         $appSlug = $appConfig['slug'];
 
-        return redirect("https://github.com/apps/{$appSlug}/installations/new");
+        return view('github-install', compact('appSlug'));
     }
 
     public function setup(Request $request)
     {
-        Storage::put('github_install_response.json', json_encode($request->all()));
+        Storage::put('github_installation_config.json', json_encode($request->all()));
 
-        return 'ok';
+        Setting::updateOrCreate([
+            'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
+        ], [
+            'value->step' => 4,
+        ]);
+
+        return to_route('onboarding', [
+            'github_install' => true,
+        ]);
     }
 
     public function handleWebhook(Request $request)
     {
-        $appConfig = Storage::get('github_response.json');
+        $appConfig = Storage::get('github_app_config.json');
         $appConfig = json_decode($appConfig, true);
 
         $webhookSecret = $appConfig['webhook_secret'];

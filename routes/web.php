@@ -3,6 +3,7 @@
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'index'])->name('onboarding');
@@ -32,6 +33,12 @@ Route::get('/github/setup', [\App\Http\Controllers\GitHubAppController::class, '
 Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class, 'handleWebhook'])
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('github.webhook');
+
+// Route::get('/test', function () {});
+
+// Route::get('/github/repos', fn () => \Illuminate\Support\Facades\Http::withToken(trim(Storage::get('github_access_token.txt')))
+//     ->get('https://api.github.com/installation/repositories')
+//     ->json());
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GetGithubRepoListAction;
 use App\Actions\PerformOnboardingAction;
 use App\Enums\SettingsEnum;
 use App\Models\Setting;
@@ -18,7 +19,7 @@ class OnboardingController extends Controller
         return $data ? json_decode($data, true) : [];
     }
 
-    public function index()
+    public function index(Request $request)
     {
         // get ip address
         $ip = exec('hostname -I | awk \'{print $1}\'') ?: '127.0.0.1';
@@ -27,10 +28,33 @@ class OnboardingController extends Controller
             : 'n/a';
         $onboardingData = $this->getOnboardingData();
 
+        $githubManifest = [
+            'name' => 'Raptor Deploy',
+            'url' => url('/'),
+            'redirect_url' => url('/github/callback'),
+            'setup_url' => route('github.setup'),
+            'callback_urls' => [
+                url('/github/callback'),
+            ],
+            'hook_attributes' => [
+                'url' => config('app.github_webhook_url') ?? url('/github/webhook'),
+            ],
+            'public' => false,
+            'default_permissions' => [
+                'contents' => 'read',
+            ],
+            'default_events' => [
+                'push',
+            ],
+        ];
+
         return Inertia::render('onboarding', [
             'ip' => $ip,
             'sshPublicKey' => $sshPublicKey,
             'onboardingData' => $onboardingData,
+            'githubManifest' => $githubManifest,
+            'query' => $request->query(),
+            'repos' => Inertia::defer(fn () => (new GetGithubRepoListAction)->handle()),
         ]);
     }
 
@@ -80,17 +104,17 @@ class OnboardingController extends Controller
                 'value->admin_domain' => $data['admin_domain'],
                 'value->site_domain' => $data['site_domain'],
             ]);
-        } elseif ($request->step === 3) {
+        } elseif ($request->step === 4) {
             $data = $request->validate([
                 'app_name' => 'required|string|max:255',
-                'repo_url' => 'required|string|max:255',
+                'repo_name' => 'required|string|max:255',
             ]);
 
             Setting::updateOrCreate([
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
                 'value->app_name' => $data['app_name'],
-                'value->repo_url' => $data['repo_url'],
+                'value->repo_name' => $data['repo_name'],
             ]);
 
             try {
@@ -102,7 +126,7 @@ class OnboardingController extends Controller
             Setting::updateOrCreate([
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
             ], [
-                'value->step' => 4,
+                'value->step' => 5,
             ]);
         }
 

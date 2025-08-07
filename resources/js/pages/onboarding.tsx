@@ -1,11 +1,12 @@
 import StepDns from "@/components/onboarding/step-dns";
 import StepFinish from "@/components/onboarding/step-finish";
-import StepSshKey from "@/components/onboarding/step-sshkey";
+import StepGithubApp from "@/components/onboarding/step-github-app";
+import StepSelectRepo from "@/components/onboarding/step-select-repo";
 import StepUser from "@/components/onboarding/step-user";
 import SettingUp from "@/components/setting-up";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { OnboardingFormData } from "@/types";
+import { GithubRepo, OnboardingFormData } from "@/types";
 import { useForm } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
@@ -21,15 +22,32 @@ const steps = [
     },
     {
         step: 3,
-        label: "Setup your first app",
+        label: "Create GitHub App",
     },
     {
         step: 4,
-        label: "Finish",
+        label: "Select Repository",
     },
 ];
 
-export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: string; sshPublicKey: string; onboardingData: OnboardingFormData }) {
+export default function Onboarding({
+    ip,
+    githubManifest,
+    onboardingData,
+    query,
+    repos,
+}: {
+    ip: string;
+    githubManifest: Record<string, any>;
+    onboardingData: OnboardingFormData;
+    query: {
+        github_install: string;
+        [key: string]: string;
+    };
+    repos: GithubRepo[];
+}) {
+    console.log(onboardingData);
+
     useEffect(() => {
         // force light mode
         document.documentElement.classList.remove("dark");
@@ -40,17 +58,17 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
         name: onboardingData.name || "Admin",
         email: onboardingData.email || "admin@email.com",
         password: onboardingData.password || "password",
-        admin_domain: onboardingData.admin_domain || "admin.heyedwin.dev",
-        site_domain: onboardingData.site_domain || "edwin.sites.heyedwin.dev",
+        admin_domain: onboardingData.admin_domain || "admin.portal.raptordeploy.com",
+        site_domain: onboardingData.site_domain || "edwin.portal.raptordeploy.com",
         app_name: onboardingData.app_name || "My Awesome App",
-        repo_url: onboardingData.repo_url || "https://github.com/edwinencomienda/laravel-demo-deploy",
+        repo_name: onboardingData.repo_name || "",
         step: onboardingData.step,
         dns_verified: false,
     });
 
     const step1Valid = form.name && form.email && form.password;
     const step2Valid = form.admin_domain && form.site_domain && form.dns_verified;
-    const step3Valid = form.repo_url && form.app_name;
+    const step3Valid = query.github_install;
 
     useEffect(() => {
         setForm((prev) => ({
@@ -86,10 +104,11 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
                     <CardContent>
                         {form.step === 1 && <StepUser form={form} setForm={setForm} />}
                         {form.step === 2 && <StepDns ip={ip} form={form} setForm={setForm} />}
-                        {form.step === 3 && <StepSshKey form={form} setForm={setForm} sshPublicKey={sshPublicKey} />}
-                        {form.step === 4 && <StepFinish onboardingData={onboardingData} />}
+                        {form.step === 3 && <StepGithubApp githubManifest={githubManifest} />}
+                        {form.step === 4 && <StepSelectRepo form={form} setForm={setForm} repos={repos} />}
+                        {form.step === 5 && <StepFinish onboardingData={onboardingData} />}
 
-                        {form.step !== 4 && (
+                        {form.step !== 5 && (
                             <div className="mt-6 flex gap-2">
                                 {form.step > 1 && (
                                     <Button variant="outline" onClick={() => setForm({ ...form, step: form.step - 1 })}>
@@ -105,7 +124,7 @@ export default function Onboarding({ ip, sshPublicKey, onboardingData }: { ip: s
                                     }
                                     onClick={handleSubmitForm}
                                 >
-                                    {form.step === 3 ? "Deploy now" : "Continue"}
+                                    {form.step === 4 ? "Deploy now" : "Continue"}
                                 </Button>
                             </div>
                         )}

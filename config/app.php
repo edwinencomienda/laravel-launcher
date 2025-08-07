@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Test Verify IP
+    |--------------------------------------------------------------------------
+    |
+    | This value is the IP address that will be used to test the DNS verification for local development.
+    |
+    */
+    'test_verify_ip' => env('TEST_VERIFY_IP'),
+
+    'github_webhook_url' => env('GITHUB_WEBHOOK_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
