@@ -33,11 +33,11 @@ class PerformOnboardingAction
             // step 2: clone repository
             $this->updateOnboardingStatus('Cloning repository');
             $repo = (new GetGithubRepoListAction)->handle()->firstWhere('full_name', $onboardingData['repo_name']);
-            $repoUrl = $repo['ssh_url'];
+            $sshUrl = $repo['ssh_url'];
             $githubAccessToken = getGithubAccessToken();
             $bash = <<<BASH
             cd /home/raptor
-            git clone {$repoUrl} /home/raptor/{$siteDomain} --access-token {$githubAccessToken}
+            git clone https://x-access-token:{$githubAccessToken}@github.com/{$sshUrl} /home/raptor/{$siteDomain}
             cd /home/raptor/{$siteDomain}
 
             composer install --no-dev
