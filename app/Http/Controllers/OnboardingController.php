@@ -109,6 +109,7 @@ class OnboardingController extends Controller
             $data = $request->validate([
                 'app_name' => 'required|string|max:255',
                 'repo_name' => 'required|string|max:255',
+                'repo_branch' => 'required|string|max:255',
             ]);
 
             Setting::updateOrCreate([
@@ -116,6 +117,7 @@ class OnboardingController extends Controller
             ], [
                 'value->app_name' => $data['app_name'],
                 'value->repo_name' => $data['repo_name'],
+                'value->repo_branch' => $data['repo_branch'],
             ]);
 
             try {

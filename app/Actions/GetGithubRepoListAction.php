@@ -18,6 +18,7 @@ class GetGithubRepoListAction
                 'name' => $repo['name'],
                 'full_name' => $repo['full_name'],
                 'ssh_url' => $repo['ssh_url'],
+                'default_branch' => $repo['default_branch'],
             ];
         });
     }

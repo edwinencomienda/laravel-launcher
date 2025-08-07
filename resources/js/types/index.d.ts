@@ -50,6 +50,7 @@ export interface OnboardingFormData {
     site_domain: string;
     app_name: string;
     repo_name: string;
+    repo_branch: string;
     step: number;
     dns_verified: boolean | null;
 }
@@ -59,4 +60,5 @@ export interface GithubRepo {
     name: string;
     full_name: string;
     ssh_url: string;
+    default_branch: string;
 }

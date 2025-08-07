@@ -62,6 +62,7 @@ export default function Onboarding({
         site_domain: onboardingData.site_domain || "edwin.portal.raptordeploy.com",
         app_name: onboardingData.app_name || "My Awesome App",
         repo_name: onboardingData.repo_name || "",
+        repo_branch: onboardingData.repo_branch,
         step: onboardingData.step,
         dns_verified: false,
     });
@@ -69,6 +70,15 @@ export default function Onboarding({
     const step1Valid = form.name && form.email && form.password;
     const step2Valid = form.admin_domain && form.site_domain && form.dns_verified;
     const step3Valid = query.github_install;
+
+    useEffect(() => {
+        if (form.repo_name && !onboardingData.repo_branch) {
+            const repo = repos.find((r) => r.full_name === form.repo_name);
+            if (repo) {
+                setForm((prev) => ({ ...prev, repo_branch: repo.default_branch }));
+            }
+        }
+    }, [form.repo_name, repos]);
 
     useEffect(() => {
         setForm((prev) => ({

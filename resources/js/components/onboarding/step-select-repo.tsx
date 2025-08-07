@@ -40,6 +40,15 @@ export default function StepSelectRepo({
                 />
                 {form.repo_name === "" && <div className="mt-1 text-sm text-red-500">Repository is required</div>}
             </div>
+            <div>
+                <Label htmlFor="repo-branch">Branch</Label>
+                <Input
+                    id="repo-branch"
+                    value={form.repo_branch || ""}
+                    onChange={(e) => setForm({ ...form, repo_branch: e.target.value })}
+                    placeholder="Enter branch name"
+                />
+            </div>
         </div>
     );
 }
