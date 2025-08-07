@@ -27,7 +27,7 @@ class PerformOnboardingAction
             User::create([
                 'name' => $onboardingData['name'],
                 'email' => $onboardingData['email'],
-                'password' => $onboardingData['password'],
+                'password' => $onboardingData['password'], // this was already hashed during the onboarding process
             ]);
 
             // step 2: clone repository
