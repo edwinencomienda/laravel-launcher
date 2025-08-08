@@ -11,6 +11,7 @@ Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'i
 Route::post('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
 Route::get('/onboarding/data', [\App\Http\Controllers\OnboardingController::class, 'getOnboardingData'])->name('onboarding.data');
 Route::get('/api/verify-dns', [\App\Http\Controllers\DnsVerificationController::class, 'verify'])->name('verify-dns');
+Route::get('/onboarding/redeploy', [\App\Http\Controllers\OnboardingController::class, 'redeploy'])->name('onboarding.redeploy');
 
 Route::get('/', function () {
     if (! User::count()) {

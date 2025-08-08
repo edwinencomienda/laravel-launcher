@@ -62,3 +62,18 @@ export interface GithubRepo {
     ssh_url: string;
     default_branch: string;
 }
+
+export interface OnboardingMetadata {
+    name: string;
+    email: string;
+    password: string;
+    step: number;
+    admin_domain: string;
+    site_domain: string;
+    app_name: string;
+    repo_url: string;
+    repo_name: string;
+    repo_branch: string;
+    status: string;
+    setup_status_message: string;
+}

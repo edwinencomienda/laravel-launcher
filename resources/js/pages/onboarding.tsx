@@ -7,7 +7,7 @@ import StepUser from "@/components/onboarding/step-user";
 import SettingUp from "@/components/setting-up";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GithubRepo, OnboardingFormData } from "@/types";
+import { GithubRepo, OnboardingFormData, OnboardingMetadata } from "@/types";
 import { useForm } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
@@ -29,6 +29,10 @@ const steps = [
         step: 4,
         label: "Select Repository",
     },
+    {
+        step: 5,
+        label: "Setup",
+    },
 ];
 
 export default function Onboarding({
@@ -40,7 +44,7 @@ export default function Onboarding({
 }: {
     ip: string;
     githubManifest: Record<string, any>;
-    onboardingData: OnboardingFormData;
+    onboardingData: OnboardingMetadata;
     query: {
         github_install: string;
         [key: string]: string;

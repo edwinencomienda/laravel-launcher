@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Actions\GetGithubRepoListAction;
-use App\Actions\PerformOnboardingAction;
 use App\Enums\SettingsEnum;
+use App\Jobs\PerformOnboardingJob;
 use App\Models\Setting;
 use App\Rules\FqdnRule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 
 class OnboardingController extends Controller
@@ -61,7 +62,6 @@ class OnboardingController extends Controller
 
     public function store(
         Request $request,
-        PerformOnboardingAction $performOnboardingAction
     ) {
         $data = [];
 
@@ -120,11 +120,7 @@ class OnboardingController extends Controller
                 'value->repo_branch' => $data['repo_branch'],
             ]);
 
-            try {
-                $performOnboardingAction->handle();
-            } catch (\Exception $e) {
-                return back()->withErrors(['error' => $e->getMessage()]);
-            }
+            dispatch(new PerformOnboardingJob);
 
             Setting::updateOrCreate([
                 'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
@@ -132,6 +128,35 @@ class OnboardingController extends Controller
                 'value->step' => 5,
             ]);
         }
+
+        return back();
+    }
+
+    public function redeploy()
+    {
+        if (! isInServer()) {
+            return back()->withErrors(['error' => 'You are not in the server']);
+        }
+
+        $siteDomain = Setting::getByKey(SettingsEnum::SITE_DOMAIN);
+        $adminDomain = Setting::getByKey(SettingsEnum::ADMIN_DOMAIN);
+
+        $paths = [
+            "/home/raptor/{$siteDomain}",
+            "/home/raptor/{$adminDomain}",
+            "/etc/nginx/sites-enabled/{$siteDomain}",
+            "/etc/nginx/sites-enabled/{$adminDomain}",
+        ];
+
+        foreach ($paths as $path) {
+            if (File::exists($path)) {
+                File::deleteDirectory($path);
+            }
+        }
+
+        shell_exec('sudo nginx -t && sudo nginx -s reload');
+
+        // dispatch(new PerformOnboardingJob);
 
         return back();
     }
