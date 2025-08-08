@@ -66,7 +66,11 @@ class PerformOnboardingAction
                 npm install
                 if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
                     npm install && npm run build
+                else
+                    echo "No build script found in package.json"
                 fi
+            else
+                echo "No package.json found"
             fi
             BASH;
             Process::timeout(600)->run($buildAssetsBash)->throw();
