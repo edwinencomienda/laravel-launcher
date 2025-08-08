@@ -62,15 +62,10 @@ class PerformOnboardingAction
             cd /home/raptor/{$siteDomain}
 
             # check if package.json exists and if it does, run npm install and if it has a build script, run it
-            if [ -f package.json ]; then
-                npm install
-                if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
-                    npm install && npm run build
-                else
-                    echo "No build script found in package.json"
-                fi
+            if [ -f package.json ] && awk '/"scripts"/,/{/{if(/"build"/){found=1}} END{exit !found}' package.json; then
+                npm install && npm run build
             else
-                echo "No package.json found"
+                echo "No build script or no package.json"
             fi
             BASH;
             $output = Process::timeout(600)->run($buildAssetsBash)->throw();
