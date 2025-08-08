@@ -154,6 +154,13 @@ class OnboardingController extends Controller
             }
         }
 
+        // reset step to 4
+        Setting::updateOrCreate([
+            'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
+        ], [
+            'value->step' => 4, // reset to step 4,
+        ]);
+
         shell_exec('sudo nginx -t && sudo nginx -s reload');
 
         // dispatch(new PerformOnboardingJob);
