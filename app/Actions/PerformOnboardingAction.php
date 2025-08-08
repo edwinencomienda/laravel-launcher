@@ -63,7 +63,12 @@ class PerformOnboardingAction
                 $packageJson = json_decode($packageJson, true);
                 if (isset($packageJson['scripts']['build'])) {
                     $this->updateOnboardingStatus('Building site assets');
-                    Process::timeout(600)->run("cd /home/raptor/{$siteDomain} && npm install && npm run build")->throw();
+                    $bash = <<<BASH
+                    cd /home/raptor/{$siteDomain}
+                    npm install
+                    npm run build
+                    BASH;
+                    Process::timeout(600)->run($bash)->throw();
                 } else {
                     dd('no build script found in package.json');
                 }
