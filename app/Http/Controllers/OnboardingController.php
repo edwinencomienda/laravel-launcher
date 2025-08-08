@@ -141,18 +141,11 @@ class OnboardingController extends Controller
         $siteDomain = Setting::getByKey(SettingsEnum::SITE_DOMAIN);
         $adminDomain = Setting::getByKey(SettingsEnum::ADMIN_DOMAIN);
 
-        $paths = [
-            "/home/raptor/{$siteDomain}",
-            "/home/raptor/{$adminDomain}",
-            "/etc/nginx/sites-enabled/{$siteDomain}",
-            "/etc/nginx/sites-enabled/{$adminDomain}",
-        ];
-
-        foreach ($paths as $path) {
-            if (File::exists($path)) {
-                File::deleteDirectory($path);
-            }
-        }
+        File::deleteDirectory("/home/raptor/{$siteDomain}");
+        File::deleteDirectory("/home/raptor/{$adminDomain}");
+        File::delete("/etc/nginx/sites-enabled/{$siteDomain}");
+        File::delete("/etc/nginx/sites-enabled/{$adminDomain}");
+        shell_exec('sudo nginx -t && sudo nginx -s reload');
 
         // reset step to 4
         Setting::updateOrCreate([
@@ -160,8 +153,6 @@ class OnboardingController extends Controller
         ], [
             'value->step' => 4, // reset to step 4,
         ]);
-
-        shell_exec('sudo nginx -t && sudo nginx -s reload');
 
         // dispatch(new PerformOnboardingJob);
 
