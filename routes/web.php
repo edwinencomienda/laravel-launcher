@@ -47,18 +47,7 @@ Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class
 // });
 
 Route::get('/test', function () {
-    $r = Process::env([
-        'npm_config_production' => 'false',
-        'NODE_ENV' => 'development',
-    ])
-        ->path('/home/raptor/edwin.portal.raptordeploy.com')
-        ->run('npm ci && npx vite build'); // npx ensures local vite
-
-    return response()->json([
-        'exitCode' => $r->exitCode(),
-        'stdout' => $r->output(),
-        'stderr' => $r->errorOutput(),
-    ]);
+    phpinfo();
 });
 
 // Route::get('/github/repos', fn () => \Illuminate\Support\Facades\Http::withToken(trim(Storage::get('github_access_token.txt')))
