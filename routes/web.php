@@ -47,7 +47,9 @@ Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class
 // });
 
 Route::get('/test', function () {
-    executeWithShellExec('cd /home/raptor/edwin.portal.raptordeploy.com && npm install && npx vite build');
+    $output = executeWithShellExec('cd /home/raptor/edwin.portal.raptordeploy.com && npm install && npx vite build');
+
+    return $output;
     // echo '<h3>Current Environment:</h3>';
     // echo '<pre>';
     // echo 'PATH: '.shell_exec('echo $PATH')."\n";
