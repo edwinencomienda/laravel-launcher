@@ -5,7 +5,12 @@ import { Button } from "../ui/button";
 export default function StepFinish({ onboardingData }: { onboardingData: OnboardingMetadata }) {
     if (!["completed", "failed"].includes(onboardingData.status)) {
         usePoll(5000);
-        return <div>{onboardingData.setup_status_message}</div>;
+        return (
+            <div>
+                <div>Setting up...</div>
+                <div>{onboardingData.setup_status_message}</div>
+            </div>
+        );
     }
 
     if (onboardingData.status === "failed") {

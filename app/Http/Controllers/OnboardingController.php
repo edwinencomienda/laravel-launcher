@@ -155,6 +155,7 @@ class OnboardingController extends Controller
             'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
         ], [
             'value->step' => 4, // reset to step 4,
+            'value->status' => 'pending',
             'value->setup_status_message' => '',
         ]);
 
