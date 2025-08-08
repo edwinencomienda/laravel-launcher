@@ -54,7 +54,22 @@ class PerformOnboardingAction
             php artisan config:cache
             php artisan migrate
             BASH;
-            Process::run($bash)->throw();
+            Process::timeout(600)->run($bash)->throw();
+
+            // step 2.1: build assets if found.
+            $this->updateOnboardingStatus('Building site assets');
+            $buildAssetsBash = <<<BASH
+            cd /home/raptor/{$siteDomain}
+
+            # check if package.json exists and if it does, run npm install and if it has a build script, run it
+            if [ -f package.json ]; then
+                npm install
+                if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
+                    npm install && npm run build
+                fi
+            fi
+            BASH;
+            Process::timeout(600)->run($buildAssetsBash)->throw();
 
             // step 3: create nginx site
             $this->updateOnboardingStatus('Creating nginx site');

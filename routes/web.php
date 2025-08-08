@@ -8,6 +8,7 @@ use Inertia\Inertia;
 
 Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'index'])->name('onboarding');
 Route::post('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
+Route::get('/onboarding/data', [\App\Http\Controllers\OnboardingController::class, 'getOnboardingData'])->name('onboarding.data');
 Route::get('/api/verify-dns', [\App\Http\Controllers\DnsVerificationController::class, 'verify'])->name('verify-dns');
 
 Route::get('/', function () {
