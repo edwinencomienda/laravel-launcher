@@ -64,7 +64,11 @@ class PerformOnboardingAction
                 if (isset($packageJson['scripts']['build'])) {
                     $this->updateOnboardingStatus('Building site assets');
                     Process::timeout(600)->run("cd /home/raptor/{$siteDomain} && npm install && npm run build")->throw();
+                } else {
+                    dd('no build script found in package.json');
                 }
+            } else {
+                dd('no package.json found');
             }
 
             // step 3: create nginx site
