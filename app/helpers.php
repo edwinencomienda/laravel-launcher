@@ -34,3 +34,16 @@ if (! function_exists('getGithubAccessToken')) {
         });
     }
 }
+
+if (! function_exists('executeWithShellExec')) {
+    function executeWithShellExec(string $command): string
+    {
+        $output = shell_exec($command.' 2>&1');
+
+        if ($output !== null) {
+            return $output;
+        }
+
+        return 'Command failed or returned no output.';
+    }
+}

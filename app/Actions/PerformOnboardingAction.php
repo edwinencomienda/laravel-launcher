@@ -63,17 +63,9 @@ class PerformOnboardingAction
                 $packageJson = json_decode($packageJson, true);
                 if (isset($packageJson['scripts']['build'])) {
                     $this->updateOnboardingStatus('Building site assets');
-                    $bash = <<<BASH
-                    cd /home/raptor/{$siteDomain}
-                    npm install
-                    npm run build
-                    BASH;
-                    Process::timeout(600)->run($bash)->throw();
-                } else {
-                    dd('no build script found in package.json');
+                    $output = executeWithShellExec("cd /home/raptor/{$siteDomain} && npm install && npm run build");
+                    echo $output;
                 }
-            } else {
-                dd('no package.json found');
             }
 
             // step 3: create nginx site
