@@ -6,6 +6,7 @@ use App\Actions\GetGithubRepoListAction;
 use App\Enums\SettingsEnum;
 use App\Jobs\PerformOnboardingJob;
 use App\Models\Setting;
+use App\Models\User;
 use App\Rules\FqdnRule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -140,6 +141,8 @@ class OnboardingController extends Controller
 
         $siteDomain = Setting::getByKey(SettingsEnum::SITE_DOMAIN);
         $adminDomain = Setting::getByKey(SettingsEnum::ADMIN_DOMAIN);
+
+        User::truncate();
 
         File::deleteDirectory("/home/raptor/{$siteDomain}");
         File::deleteDirectory("/home/raptor/{$adminDomain}");
