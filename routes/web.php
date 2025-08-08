@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -34,6 +35,16 @@ Route::get('/github/setup', [\App\Http\Controllers\GitHubAppController::class, '
 Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class, 'handleWebhook'])
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('github.webhook');
+
+Route::get('/test', function () {
+    $bash = <<<'BASH'
+    cd /home/raptor/edwin.portal.raptordeploy.com
+    npm install
+    npm run build
+    BASH;
+    $output = Process::timeout(600)->run($bash)->throw();
+    dd($output);
+});
 
 // Route::get('/github/repos', fn () => \Illuminate\Support\Facades\Http::withToken(trim(Storage::get('github_access_token.txt')))
 //     ->get('https://api.github.com/installation/repositories')
