@@ -2,7 +2,6 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -37,7 +36,7 @@ Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class
     ->name('github.webhook');
 
 Route::get('/test', function () {
-    $output = Process::timeout(600)->run('cd /home/raptor/edwin.portal.raptordeploy.com && npm install && npm run build')->throw();
+    $output = shell_exec('cd /home/raptor/edwin.portal.raptordeploy.com && npm install && npm run build');
     dd($output);
 });
 
