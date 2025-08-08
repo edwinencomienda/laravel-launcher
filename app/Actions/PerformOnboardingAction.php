@@ -69,6 +69,9 @@ class PerformOnboardingAction
             fi
             BASH;
             $output = Process::timeout(600)->run($buildAssetsBash)->throw();
+            if (! is_dir('/home/raptor/.raptor/logs')) {
+                mkdir('/home/raptor/.raptor/logs', 0777, true);
+            }
             file_put_contents('/home/raptor/.raptor/logs/build_assets.log', $output);
 
             // step 3: create nginx site
