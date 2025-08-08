@@ -73,7 +73,8 @@ class PerformOnboardingAction
                 echo "No package.json found"
             fi
             BASH;
-            Process::timeout(600)->run($buildAssetsBash)->throw();
+            $output = Process::timeout(600)->run($buildAssetsBash)->throw();
+            file_put_contents('/home/raptor/.raptor/logs/build_assets.log', $output);
 
             // step 3: create nginx site
             $this->updateOnboardingStatus('Creating nginx site');
