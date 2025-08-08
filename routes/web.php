@@ -36,14 +36,29 @@ Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('github.webhook');
 
+// Route::get('/test', function () {
+//     $bash = <<<'BASH'
+//     cd /home/raptor/edwin.portal.raptordeploy.com
+//     npm install
+//     npm run build
+//     BASH;
+//     $output = Process::timeout(600)->run($bash)->throw();
+//     dd($output);
+// });
+
 Route::get('/test', function () {
-    $bash = <<<'BASH'
-    cd /home/raptor/edwin.portal.raptordeploy.com
-    npm install
-    npm run build
-    BASH;
-    $output = Process::timeout(600)->run($bash)->throw();
-    dd($output);
+    $r = Process::env([
+        'npm_config_production' => 'false',
+        'NODE_ENV' => 'development',
+    ])
+        ->path('/home/raptor/edwin.portal.raptordeploy.com')
+        ->run('npm ci && npx vite build'); // npx ensures local vite
+
+    return response()->json([
+        'exitCode' => $r->exitCode(),
+        'stdout' => $r->output(),
+        'stderr' => $r->errorOutput(),
+    ]);
 });
 
 // Route::get('/github/repos', fn () => \Illuminate\Support\Facades\Http::withToken(trim(Storage::get('github_access_token.txt')))
