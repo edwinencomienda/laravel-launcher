@@ -1,3 +1,4 @@
+import { ButtonLoading } from "@/components/button-loading";
 import StepDns from "@/components/onboarding/step-dns";
 import StepFinish from "@/components/onboarding/step-finish";
 import StepGithubApp from "@/components/onboarding/step-github-app";
@@ -125,7 +126,8 @@ export default function Onboarding({
                                         Previous
                                     </Button>
                                 )}
-                                <Button
+                                <ButtonLoading
+                                    loading={onboardingForm.processing}
                                     disabled={
                                         onboardingForm.processing ||
                                         (form.step === 1 && !step1Valid) ||
@@ -135,7 +137,7 @@ export default function Onboarding({
                                     onClick={handleSubmitForm}
                                 >
                                     {form.step === 4 ? "Deploy now" : "Continue"}
-                                </Button>
+                                </ButtonLoading>
                             </div>
                         )}
 

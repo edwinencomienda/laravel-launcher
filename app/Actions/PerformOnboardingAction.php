@@ -57,22 +57,15 @@ class PerformOnboardingAction
             Process::timeout(600)->run($bash)->throw();
 
             // step 2.1: build assets if found.
-            $this->updateOnboardingStatus('Building site assets');
-            $buildAssetsBash = <<<BASH
-            cd /home/raptor/{$siteDomain}
-
-            # check if package.json exists and if it does, run npm install and if it has a build script, run it
-            if [ -f package.json ] && awk '/"scripts"/,/{/{if(/"build"/){found=1}} END{exit !found}' package.json; then
-                npm install && npm run build
-            else
-                echo "No build script or no package.json"
-            fi
-            BASH;
-            $output = Process::timeout(600)->run($buildAssetsBash)->throw();
-            if (! is_dir('/home/raptor/.raptor/logs')) {
-                mkdir('/home/raptor/.raptor/logs', 0777, true);
+            $packageJsonPath = "/home/raptor/{$siteDomain}/package.json";
+            $packageJson = file_exists($packageJsonPath) ? file_get_contents($packageJsonPath) : null;
+            if ($packageJson) {
+                $packageJson = json_decode($packageJson, true);
+                if (isset($packageJson['scripts']['build'])) {
+                    $this->updateOnboardingStatus('Building site assets');
+                    Process::timeout(600)->run("cd /home/raptor/{$siteDomain} && npm install && npm run build")->throw();
+                }
             }
-            file_put_contents('/home/raptor/.raptor/logs/build_assets.log', $output);
 
             // step 3: create nginx site
             $this->updateOnboardingStatus('Creating nginx site');
