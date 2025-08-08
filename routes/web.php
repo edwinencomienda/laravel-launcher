@@ -47,7 +47,16 @@ Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class
 // });
 
 Route::get('/test', function () {
-    phpinfo();
+    echo '<h3>Current Environment:</h3>';
+    echo '<pre>';
+    echo 'PATH: '.shell_exec('echo $PATH')."\n";
+    echo 'USER: '.shell_exec('whoami')."\n";
+    echo 'PWD: '.shell_exec('pwd')."\n";
+    echo 'Node version: '.shell_exec('node --version 2>&1')."\n";
+    echo 'NPM version: '.shell_exec('npm --version 2>&1')."\n";
+    echo 'Which node: '.shell_exec('which node 2>&1')."\n";
+    echo 'Which npm: '.shell_exec('which npm 2>&1')."\n";
+    echo '</pre>';
 });
 
 // Route::get('/github/repos', fn () => \Illuminate\Support\Facades\Http::withToken(trim(Storage::get('github_access_token.txt')))
