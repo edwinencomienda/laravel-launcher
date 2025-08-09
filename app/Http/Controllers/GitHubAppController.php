@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RedeployAppAction;
 use App\Enums\SettingsEnum;
 use App\Models\Application;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class GitHubAppController extends Controller
@@ -84,11 +84,9 @@ class GitHubAppController extends Controller
                 $application = Application::where('repo_name', $repoFullName)->first();
 
                 if ($application) {
-                    Log::info("New update from app {$application->name}", [
-                        'repo_name' => $repoFullName,
-                        'application_id' => $application->id,
-                        'webhook_data' => $data,
-                    ]);
+                    info("new update from app {$application->name}");
+                    $redeployAppAction = new RedeployAppAction;
+                    $redeployAppAction->handle($application->app_path);
                 }
             }
 
