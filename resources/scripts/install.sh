@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+# set -e
 
 # Configuration variables
 CUSTOM_USER="raptor"
@@ -193,6 +193,10 @@ if ! command -v node &> /dev/null; then
     apt-get install -y nodejs
     echo "Updating npm to latest version..."
     npm install -g npm@latest
+
+    npm install -g yarn
+    npm install -g pnpm
+    npm install -g bun
 else
     echo "Node.js already installed."
     echo "Updating npm to latest version..."
@@ -348,6 +352,8 @@ chmod 755 /etc/supervisor/conf.d/raptor.conf
 supervisorctl reread
 supervisorctl update
 supervisorctl restart all
+
+echo "Supervisor config raptor.conf created and restarted."
 else
     echo "Supervisor config raptor.conf already exists, skipping creation."
 fi
