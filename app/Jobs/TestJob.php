@@ -24,7 +24,7 @@ class TestJob implements ShouldQueue
     {
         // check if dir exists
         // if (! is_dir('/home/raptor')) {
-        file_put_contents('/home/raptor/test.log', 'wew');
+        file_put_contents('/home/raptor/test.log', 'elon');
         // }
     }
 }
