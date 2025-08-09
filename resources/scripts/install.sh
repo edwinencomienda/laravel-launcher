@@ -357,6 +357,7 @@ stopwaitsecs=3600
 stopsignal=SIGTERM
 stopasgroup=true
 killasgroup=true
+environment=HOME="/home/$CUSTOM_USER"
 EOF
 
 chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/supervisor/conf.d/raptor.conf
