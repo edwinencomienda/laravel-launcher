@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SettingsEnum;
+use App\Models\Application;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class GitHubAppController extends Controller
@@ -75,6 +77,20 @@ class GitHubAppController extends Controller
         if (hash_equals($signature, $computedSignature)) {
             $data = $request->json()->all();
             logger('webhook received', $data);
+
+            // Check if repository exists in our applications
+            if (isset($data['repository']['full_name'])) {
+                $repoFullName = $data['repository']['full_name'];
+                $application = Application::where('repo_name', $repoFullName)->first();
+
+                if ($application) {
+                    Log::info("New update from app {$application->name}", [
+                        'repo_name' => $repoFullName,
+                        'application_id' => $application->id,
+                        'webhook_data' => $data,
+                    ]);
+                }
+            }
 
             return response()->json(['message' => 'Webhook processed']);
         } else {
