@@ -9,7 +9,7 @@ class GetGithubRepoListAction
     public function handle()
     {
         $response = Http::withToken(getGithubAccessToken())
-            ->get('https://api.github.com/installation/repositories?per_page=300&page=1')
+            ->get('https://api.github.com/installation/repositories?per_page=300&')
             ->json();
 
         return collect($response['repositories'])->map(function ($repo) {
