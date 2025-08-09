@@ -37,3 +37,7 @@ Route::post('/github/webhook', [\App\Http\Controllers\GitHubAppController::class
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+Route::get('/test', function () {
+    dispatch(new \App\Jobs\TestJob);
+});
