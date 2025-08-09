@@ -159,8 +159,6 @@ class OnboardingController extends Controller
             'value->setup_status_message' => '',
         ]);
 
-        // dispatch(new PerformOnboardingJob);
-
         return back();
     }
 }
