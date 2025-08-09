@@ -332,6 +332,9 @@ EOF
     # restart nginx and enable the default site
     ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
     nginx -t && nginx -s reload
+
+    # restart supervisor
+    supervisorctl restart all
 else
     echo "Default site already exists, skipping creation."
 fi
@@ -353,9 +356,7 @@ EOF
 chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/supervisor/conf.d/raptor.conf
 chmod 755 /etc/supervisor/conf.d/raptor.conf
 
-supervisorctl reread
-supervisorctl update
-supervisorctl restart all
+systemctl restart supervisor
 
 echo "Supervisor config raptor.conf created and restarted."
 else
