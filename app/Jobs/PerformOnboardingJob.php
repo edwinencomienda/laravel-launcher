@@ -132,6 +132,8 @@ class PerformOnboardingJob implements ShouldQueue
 
     private function updateOnboardingStatusMessage(string $message): void
     {
+        info('onboarding-debug: '.$message);
+
         Setting::updateOrCreate([
             'key' => SettingsEnum::CURRENT_ONBOARDING_DATA,
         ], [
