@@ -163,6 +163,6 @@ class OnboardingController extends Controller
             'value->setup_status_message' => '',
         ]);
 
-        return back();
+        return redirect()->route('onboarding');
     }
 }
