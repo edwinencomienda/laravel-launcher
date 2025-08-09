@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Process;
 
 class TestJob implements ShouldQueue
 {
@@ -22,9 +23,7 @@ class TestJob implements ShouldQueue
      */
     public function handle(): void
     {
-        // check if dir exists
-        // if (! is_dir('/home/raptor')) {
-        file_put_contents('/home/raptor/test.log', 'elon');
-        // }
+        $output = Process::run('cd /home/raptor/raptor && composer install')->throw();
+        info($output->output());
     }
 }

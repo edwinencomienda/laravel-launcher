@@ -67,6 +67,7 @@ class PerformOnboardingJob implements ShouldQueue
         $repoBranch = $onboardingData['repo_branch'] ?? $repo['default_branch'];
         $githubAccessToken = getGithubAccessToken();
         $bash = <<<BASH
+            set -e
             cd /home/raptor
             git clone -b {$repoBranch} https://x-access-token:{$githubAccessToken}@github.com/{$repo['full_name']} /home/raptor/{$siteDomain}
             cd /home/raptor/{$siteDomain}

@@ -182,6 +182,9 @@ if [ ! -f /usr/local/bin/composer ]; then
 
   echo "$CUSTOM_USER ALL=NOPASSWD: /usr/local/bin/composer *" > /etc/sudoers.d/composer
   chmod 440 /etc/sudoers.d/composer
+
+  echo "export COMPOSER_HOME=/home/$CUSTOM_USER/.composer" >> /home/$CUSTOM_USER/.bashrc
+  echo "source /home/$CUSTOM_USER/.bashrc" >> /home/$CUSTOM_USER/.bashrc
 else
   echo "Composer already installed."
 fi
