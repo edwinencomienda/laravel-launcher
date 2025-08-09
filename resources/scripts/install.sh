@@ -328,6 +328,32 @@ else
     echo "Default site already exists, skipping creation."
 fi
 
+if [ ! -f /etc/supervisor/conf.d/raptor.conf ]; then
+cat >/etc/supervisor/conf.d/raptor.conf <<EOF
+[program:raptor-queue]
+command=php /home/$CUSTOM_USER/raptor/artisan queue:work --sleep=3 --tries=3
+process_name=%(program_name)s_%(process_num)02d
+autostart=true
+autorestart=true
+user=$CUSTOM_USER
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/home/$CUSTOM_USER/raptor/storage/logs/queue-worker.log
+stopwaitsecs=3600
+EOF
+
+chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/supervisor/conf.d/raptor.conf
+chmod 755 /etc/supervisor/conf.d/raptor.conf
+
+supervisorctl reread
+supervisorctl update
+supervisorctl restart all
+else
+    echo "Supervisor config raptor.conf already exists, skipping creation."
+fi
+
+
+
 echo ""
 echo "=================================================="
 echo "🚀  Setup complete! 🚀"
