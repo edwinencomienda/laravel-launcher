@@ -18,6 +18,8 @@ class PerformOnboardingJob implements ShouldQueue
 {
     use Queueable;
 
+    public $tries = 1;
+
     /**
      * Create a new job instance.
      */
