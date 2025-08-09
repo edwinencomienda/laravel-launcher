@@ -142,6 +142,10 @@ class OnboardingController extends Controller
         $siteDomain = Setting::getByKey(SettingsEnum::SITE_DOMAIN);
         $adminDomain = Setting::getByKey(SettingsEnum::ADMIN_DOMAIN);
 
+        if (! $siteDomain || ! $adminDomain) {
+            return back()->withErrors(['error' => 'Site domain and admin domain are not set']);
+        }
+
         User::truncate();
 
         File::deleteDirectory("/home/raptor/{$siteDomain}");
