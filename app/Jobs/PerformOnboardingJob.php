@@ -6,6 +6,7 @@ use App\Actions\CreateNginxSiteAction;
 use App\Actions\GenerateDomainSslAction;
 use App\Actions\GetGithubRepoListAction;
 use App\Enums\SettingsEnum;
+use App\Models\Application;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -47,6 +48,15 @@ class PerformOnboardingJob implements ShouldQueue
             'name' => $onboardingData['name'],
             'email' => $onboardingData['email'],
             'password' => $onboardingData['password'], // this was already hashed during the onboarding process
+        ]);
+
+        $this->updateOnboardingStatusMessage('Creating application');
+        Application::create([
+            'name' => $onboardingData['app_name'],
+            'site_domain' => $siteDomain,
+            'environment' => 'production',
+            'repo_name' => $onboardingData['repo_name'],
+            'app_path' => "/home/raptor/{$siteDomain}",
         ]);
 
         // step 2: clone repository
