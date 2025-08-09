@@ -23,8 +23,8 @@ class TestJob implements ShouldQueue
     public function handle(): void
     {
         // check if dir exists
-        if (! is_dir('/home/raptor')) {
-            file_put_contents('/home/raptor/test.log', 'wew');
-        }
+        // if (! is_dir('/home/raptor')) {
+        file_put_contents('/home/raptor/test.log', 'wew');
+        // }
     }
 }
