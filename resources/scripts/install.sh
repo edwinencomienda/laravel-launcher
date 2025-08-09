@@ -322,6 +322,10 @@ EOF
     php /home/$CUSTOM_USER/raptor/artisan key:generate
     php /home/$CUSTOM_USER/raptor/artisan migrate
 
+    # build the assets
+    bun install
+    bun run build
+
     chown -R "$CUSTOM_USER":"$CUSTOM_USER" /home/$CUSTOM_USER/raptor
     chmod -R 755 /home/$CUSTOM_USER/raptor
 
