@@ -351,6 +351,9 @@ numprocs=1
 redirect_stderr=true
 stdout_logfile=/home/$CUSTOM_USER/raptor/storage/logs/queue-worker.log
 stopwaitsecs=3600
+stopsignal=SIGTERM
+stopasgroup=true
+killasgroup=true
 EOF
 
 chown -R "$CUSTOM_USER":"$CUSTOM_USER" /etc/supervisor/conf.d/raptor.conf
